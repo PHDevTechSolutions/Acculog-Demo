@@ -75,28 +75,25 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   // Date range filter state (with localStorage persistence)
-  const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<
-    DateRange | undefined
-  >(() => {
-    if (typeof window === "undefined") return undefined;
+  const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<DateRange | undefined>(undefined);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem("dateCreatedFilterRange");
-      if (!stored) return undefined;
-      const parsed = JSON.parse(stored);
-      if (parsed?.from) parsed.from = new Date(parsed.from);
-      if (parsed?.to) parsed.to = new Date(parsed.to);
-      return parsed as DateRange;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.from) parsed.from = new Date(parsed.from);
+        if (parsed?.to) parsed.to = new Date(parsed.to);
+        setDateCreatedFilterRange(parsed);
+      }
     } catch {
-      return undefined;
+      // ignore
     }
-  });
+  }, []);
 
   useEffect(() => {
     if (dateCreatedFilterRange) {
-      localStorage.setItem(
-        "dateCreatedFilterRange",
-        JSON.stringify(dateCreatedFilterRange)
-      );
+      localStorage.setItem("dateCreatedFilterRange", JSON.stringify(dateCreatedFilterRange));
     } else {
       localStorage.removeItem("dateCreatedFilterRange");
     }
