@@ -25,7 +25,7 @@ import L from "leaflet";
 
 import type { DateRange } from "react-day-picker";
 
-// Fix leaflet icon issue
+// Fix leaflet icon issue for markers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -89,8 +89,17 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   // Date range filter state with localStorage persistence
-  const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<DateRange | undefined>(undefined);
+  const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<
+    DateRange | undefined
+  >(undefined);
 
+  // Only render map after hydration to avoid window errors
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  // Load date range filter from localStorage once on client
   useEffect(() => {
     try {
       const stored = localStorage.getItem("dateCreatedFilterRange");
@@ -101,18 +110,23 @@ export default function Page() {
         setDateCreatedFilterRange(parsed);
       }
     } catch {
-      // ignore
+      // ignore JSON parse errors
     }
   }, []);
 
+  // Save date range filter to localStorage on change
   useEffect(() => {
     if (dateCreatedFilterRange) {
-      localStorage.setItem("dateCreatedFilterRange", JSON.stringify(dateCreatedFilterRange));
+      localStorage.setItem(
+        "dateCreatedFilterRange",
+        JSON.stringify(dateCreatedFilterRange)
+      );
     } else {
       localStorage.removeItem("dateCreatedFilterRange");
     }
   }, [dateCreatedFilterRange]);
 
+  // Sync userId from query param to context
   useEffect(() => {
     if (queryUserId && queryUserId !== userId) {
       setUserId(queryUserId);
@@ -151,10 +165,12 @@ export default function Page() {
     fetchUserData();
   }, [queryUserId]);
 
+  // Activity logs and users map state
   const [posts, setPosts] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [usersMap, setUsersMap] = useState<Record<string, UserInfo>>({});
 
+  // Fetch activity logs
   useEffect(() => {
     async function fetchActivityLogs() {
       setLoading(true);
@@ -172,6 +188,7 @@ export default function Page() {
     fetchActivityLogs();
   }, []);
 
+  // Fetch user info for posts
   useEffect(() => {
     async function fetchUsersForPosts() {
       if (posts.length === 0) return;
@@ -200,18 +217,26 @@ export default function Page() {
     fetchUsersForPosts();
   }, [posts]);
 
-  // Filter posts according to role, referenceID, date range, and location
+  // Filter posts according to role, referenceID, date range, and ensure valid lat/lng
   const postsWithLocation = useMemo(() => {
     if (!userDetails) return [];
 
     const filteredByDateAndLocation = posts.filter((p) => {
-      if (p.Latitude === undefined || p.Longitude === undefined) return false;
+      if (
+        typeof p.Latitude !== "number" ||
+        typeof p.Longitude !== "number" ||
+        isNaN(p.Latitude) ||
+        isNaN(p.Longitude)
+      )
+        return false;
 
       if (!dateCreatedFilterRange?.from) return true;
 
       const postDateKey = toLocalDateKey(p.date_created);
       const fromKey = toLocalDateKey(dateCreatedFilterRange.from);
-      const toKey = toLocalDateKey(dateCreatedFilterRange.to ?? dateCreatedFilterRange.from);
+      const toKey = toLocalDateKey(
+        dateCreatedFilterRange.to ?? dateCreatedFilterRange.from
+      );
 
       return postDateKey >= fromKey && postDateKey <= toKey;
     });
@@ -223,19 +248,18 @@ export default function Page() {
       return filteredByDateAndLocation;
     }
 
-    // Otherwise only posts matching user's ReferenceID
     return filteredByDateAndLocation.filter(
       (p) => p.ReferenceID === userDetails.ReferenceID
     );
   }, [posts, dateCreatedFilterRange, userDetails]);
 
+  // Default center for the map (Manila fallback)
   const defaultCenter: [number, number] =
     postsWithLocation.length > 0
       ? [postsWithLocation[0].Latitude!, postsWithLocation[0].Longitude!]
-      : [14.5995, 120.9842]; // Manila fallback
+      : [14.5995, 120.9842];
 
   if (error) return <p className="p-4 text-red-600">{error}</p>;
-
   if (!userDetails) return <p className="p-4">Loading user details...</p>;
 
   return (
@@ -270,7 +294,7 @@ export default function Page() {
                 <p>No data available for your account in this date range.</p>
               )}
 
-              {!loading && postsWithLocation.length > 0 && (
+              {hydrated && postsWithLocation.length > 0 && (
                 <MapContainer
                   center={defaultCenter}
                   zoom={13}
@@ -311,11 +335,12 @@ export default function Page() {
                   ))}
                 </MapContainer>
               )}
+
               <style jsx global>{`
-        .leaflet-pane {
-          z-index: 0 !important;
-        }
-      `}</style>
+                .leaflet-pane {
+                  z-index: 0 !important;
+                }
+              `}</style>
             </main>
           </SidebarInset>
         </SidebarProvider>
