@@ -20,6 +20,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import "leaflet/dist/leaflet.css";
 
 // Dynamically import LocationMap with SSR disabled
 const LocationMap = dynamic(() => import("@/components/location-map"), {
