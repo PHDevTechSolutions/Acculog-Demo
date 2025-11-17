@@ -118,8 +118,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
-              <Plus />
-              <span>New Calendar</span>
+              
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
