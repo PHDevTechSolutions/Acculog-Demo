@@ -19,22 +19,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
+import LocationMap from "@/components/location-map";
 import type { DateRange } from "react-day-picker";
-
-// Fix leaflet icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
 
 interface ActivityLog {
   ReferenceID: string;
@@ -84,11 +70,11 @@ export default function Page() {
 
   const queryUserId = searchParams?.get("id") ?? "";
 
-  // State for user details including role, department, ReferenceID
+  // User details and error state
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Date range filter state with localStorage persistence
+  // Date range filter state (with localStorage persistence)
   const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<
     DateRange | undefined
   >(() => {
@@ -116,13 +102,14 @@ export default function Page() {
     }
   }, [dateCreatedFilterRange]);
 
+  // Sync userId from query param to context
   useEffect(() => {
     if (queryUserId && queryUserId !== userId) {
       setUserId(queryUserId);
     }
   }, [queryUserId, userId, setUserId]);
 
-  // Fetch user details by queryUserId
+  // Fetch user details
   useEffect(() => {
     const fetchUserData = async () => {
       if (!queryUserId) {
@@ -154,10 +141,12 @@ export default function Page() {
     fetchUserData();
   }, [queryUserId]);
 
+  // Activity logs and users map state
   const [posts, setPosts] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [usersMap, setUsersMap] = useState<Record<string, UserInfo>>({});
 
+  // Fetch activity logs
   useEffect(() => {
     async function fetchActivityLogs() {
       setLoading(true);
@@ -175,6 +164,7 @@ export default function Page() {
     fetchActivityLogs();
   }, []);
 
+  // Fetch users info for posts
   useEffect(() => {
     async function fetchUsersForPosts() {
       if (posts.length === 0) return;
@@ -203,42 +193,45 @@ export default function Page() {
     fetchUsersForPosts();
   }, [posts]);
 
-  // Filter posts according to role, referenceID, date range, and location
+  // Filter posts by date range and user permissions, ensure valid lat/lng for LocationMap
   const postsWithLocation = useMemo(() => {
     if (!userDetails) return [];
 
-    const filteredByDateAndLocation = posts.filter((p) => {
-      if (p.Latitude === undefined || p.Longitude === undefined) return false;
-
-      if (!dateCreatedFilterRange?.from) return true;
-
-      const postDateKey = toLocalDateKey(p.date_created);
-      const fromKey = toLocalDateKey(dateCreatedFilterRange.from);
-      const toKey = toLocalDateKey(dateCreatedFilterRange.to ?? dateCreatedFilterRange.from);
-
-      return postDateKey >= fromKey && postDateKey <= toKey;
-    });
+    const filtered = posts
+      .filter(
+        (p): p is ActivityLog & { Latitude: number; Longitude: number } =>
+          typeof p.Latitude === "number" &&
+          typeof p.Longitude === "number" &&
+          !isNaN(p.Latitude) &&
+          !isNaN(p.Longitude)
+      )
+      .filter((p) => {
+        if (!dateCreatedFilterRange?.from) return true;
+        const postDateKey = toLocalDateKey(p.date_created);
+        const fromKey = toLocalDateKey(dateCreatedFilterRange.from);
+        const toKey = toLocalDateKey(
+          dateCreatedFilterRange.to ?? dateCreatedFilterRange.from
+        );
+        return postDateKey >= fromKey && postDateKey <= toKey;
+      });
 
     if (
       userDetails.Role === "Super Admin" ||
       userDetails.Department === "Human Resources"
     ) {
-      return filteredByDateAndLocation;
+      return filtered;
     }
 
-    // Otherwise only posts matching user's ReferenceID
-    return filteredByDateAndLocation.filter(
-      (p) => p.ReferenceID === userDetails.ReferenceID
-    );
+    return filtered.filter((p) => p.ReferenceID === userDetails.ReferenceID);
   }, [posts, dateCreatedFilterRange, userDetails]);
 
+  // Default center for the map (Manila fallback)
   const defaultCenter: [number, number] =
     postsWithLocation.length > 0
       ? [postsWithLocation[0].Latitude!, postsWithLocation[0].Longitude!]
-      : [14.5995, 120.9842]; // Manila fallback
+      : [14.5995, 120.9842];
 
   if (error) return <p className="p-4 text-red-600">{error}</p>;
-
   if (!userDetails) return <p className="p-4">Loading user details...</p>;
 
   return (
@@ -274,51 +267,18 @@ export default function Page() {
               )}
 
               {!loading && postsWithLocation.length > 0 && (
-                <MapContainer
-                  center={defaultCenter}
-                  zoom={13}
-                  scrollWheelZoom={true}
-                  style={{ height: "100%", width: "100%" }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  {postsWithLocation.map((post) => (
-                    <Marker
-                      key={post._id ?? post.date_created}
-                      position={[post.Latitude!, post.Longitude!]}
-                    >
-                      <Popup>
-                        <strong>
-                          {usersMap[post.ReferenceID]
-                            ? `${usersMap[post.ReferenceID].Firstname} ${usersMap[post.ReferenceID].Lastname}`
-                            : "Unknown User"}
-                        </strong>
-                        <br />
-                        Type: {post.Type}
-                        <br />
-                        Status: {post.Status}
-                        <br />
-                        Location: {post.Location}
-                        <br />
-                        Date: {new Date(post.date_created).toLocaleString()}
-                        {post.Remarks && (
-                          <>
-                            <br />
-                            Remarks: {post.Remarks}
-                          </>
-                        )}
-                      </Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
+                <LocationMap
+                  posts={postsWithLocation}
+                  usersMap={usersMap}
+                  defaultCenter={defaultCenter}
+                />
               )}
+
               <style jsx global>{`
-        .leaflet-pane {
-          z-index: 0 !important;
-        }
-      `}</style>
+                .leaflet-pane {
+                  z-index: 0 !important;
+                }
+              `}</style>
             </main>
           </SidebarInset>
         </SidebarProvider>
