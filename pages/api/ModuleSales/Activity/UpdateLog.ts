@@ -8,14 +8,13 @@ export default async function updateActivityLog(
 ) {
   if (req.method !== "PUT") {
     res.setHeader("Allow", ["PUT"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
-    return;
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   try {
-    const { _id, ReferenceID, Email, Type, Status, Remarks } = req.body;
+    const { _id, Remarks } = req.body;
 
-    if (!_id || !ReferenceID || !Email || !Type || !Status || !Remarks) {
+    if (!_id || Remarks === undefined) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -26,10 +25,6 @@ export default async function updateActivityLog(
       { _id: new ObjectId(_id) },
       {
         $set: {
-          ReferenceID,
-          Email,
-          Type,
-          Status,
           Remarks,
           updatedAt: new Date(),
         },
@@ -40,9 +35,9 @@ export default async function updateActivityLog(
       return res.status(404).json({ error: "Activity log not found" });
     }
 
-    res.status(200).json({ message: "Activity log updated successfully" });
+    return res.status(200).json({ message: "Activity log updated successfully" });
   } catch (error) {
     console.error("Error updating activity log:", error);
-    res.status(500).json({ error: "Failed to update activity log" });
+    return res.status(500).json({ error: "Failed to update activity log" });
   }
 }

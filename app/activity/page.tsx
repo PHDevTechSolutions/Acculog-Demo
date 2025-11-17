@@ -1,0 +1,757 @@
+"use client";
+
+import { Fragment, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+
+import { UserProvider, useUser } from "@/contexts/UserContext";
+import { FormatProvider } from "@/contexts/FormatContext";
+import { AppSidebar } from "@/components/app-sidebar";
+
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, } from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+
+import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/components/ui/sidebar";
+import { Table, TableCaption, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, PaginationEllipsis, } from "@/components/ui/pagination";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner";
+import { Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from "@/components/ui/dialog";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import { type DateRange } from "react-day-picker";
+
+interface ActivityLog {
+    ReferenceID: string;
+    Email: string;
+    Type: string;
+    Status: string;
+    Location: string;
+    date_created: string;
+    PhotoURL?: string;
+    Remarks: string;
+    _id?: string;
+}
+
+export default function Page() {
+    const searchParams = useSearchParams();
+    const { userId, setUserId } = useUser();
+    const queryUserId = searchParams?.get("id") ?? "";
+
+    const [userDetails, setUserDetails] = useState({
+        UserId: "",
+        Firstname: "",
+        Lastname: "",
+        Email: "",
+        Role: "",
+        Department: "",
+        Company: "",
+        ReferenceID: "",
+        profilePicture: "",
+    });
+
+    const [posts, setPosts] = useState<ActivityLog[]>([]);
+    const [usersMap, setUsersMap] = useState<
+        Record<string, { Firstname: string; Lastname: string; profilePicture?: string }>
+    >({});
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Filters and pagination state
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterType, setFilterType] = useState<string | null>(null);
+    const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<DateRange | undefined>(undefined);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Edit dialog state
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState<null | { _id?: string; Remarks: string }>(null);
+    const [remarksInput, setRemarksInput] = useState("");
+
+    // Expanded rows state
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+
+    // Sync userId from query param to context
+    useEffect(() => {
+        if (queryUserId && queryUserId !== userId) {
+            setUserId(queryUserId);
+        }
+    }, [queryUserId, userId, setUserId]);
+
+    // Fetch logged-in user details
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!queryUserId) {
+                setError("User ID is missing.");
+                setLoading(false);
+                return;
+            }
+            try {
+                setLoading(true);
+                const res = await fetch(`/api/user?id=${encodeURIComponent(queryUserId)}`);
+                if (!res.ok) throw new Error("Failed to fetch user data");
+                const data = await res.json();
+                setUserDetails({
+                    UserId: data._id ?? "",
+                    Firstname: data.Firstname ?? "",
+                    Lastname: data.Lastname ?? "",
+                    Email: data.Email ?? "",
+                    Role: data.Role ?? "",
+                    Department: data.Department ?? "",
+                    Company: data.Company ?? "",
+                    ReferenceID: data.ReferenceID ?? "",
+                    profilePicture: data.profilePicture ?? "",
+                });
+            } catch (err) {
+                console.error("Error fetching user data:", err);
+                toast.error("Failed to load user data.");
+                setError("Failed to load user data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserData();
+    }, [queryUserId]);
+
+    // Fetch activity logs
+    useEffect(() => {
+        const fetchActivityLogs = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch("/api/ModuleSales/Activity/FetchLog");
+                if (!res.ok) throw new Error("Failed to fetch logs");
+                const data = await res.json();
+                setPosts(data.data);
+            } catch (error) {
+                toast.error("Error fetching activity logs.");
+                console.error("Fetch error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchActivityLogs();
+    }, []);
+
+    // Fetch user info for ReferenceIDs in posts
+    useEffect(() => {
+        async function fetchUsersForPosts() {
+            if (posts.length === 0) return;
+
+            const uniqueRefs = Array.from(new Set(posts.map((p) => p.ReferenceID)));
+
+            try {
+                const res = await fetch(`/api/users?referenceIDs=${uniqueRefs.join(",")}`);
+                if (!res.ok) throw new Error("Failed to fetch users");
+                const usersData = await res.json();
+
+                const map: Record<string, { Firstname: string; Lastname: string; profilePicture?: string }> = {};
+                usersData.forEach((user: any) => {
+                    map[user.ReferenceID] = {
+                        Firstname: user.Firstname,
+                        Lastname: user.Lastname,
+                        profilePicture: user.profilePicture,
+                    };
+                });
+
+                setUsersMap(map);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+            }
+        }
+        fetchUsersForPosts();
+    }, [posts]);
+
+    function isDateInRange(dateStr: string, start?: Date, end?: Date) {
+        if (!start && !end) return true;
+
+        const date = new Date(dateStr);
+        const dateYMD = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // local midnight
+
+        if (start && end) {
+            const startYMD = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            const endYMD = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            // inclusive range
+            return dateYMD >= startYMD && dateYMD <= endYMD;
+        } else if (start) {
+            const startYMD = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            return dateYMD.getTime() === startYMD.getTime();
+        } else if (end) {
+            const endYMD = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            return dateYMD.getTime() === endYMD.getTime();
+        }
+        return true;
+    }
+
+    // Filtering logic
+    const filteredByReference = posts.filter((post) => post.ReferenceID === userDetails.ReferenceID);
+
+    const allVisibleAccounts =
+        userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources"
+            ? posts
+            : filteredByReference;
+
+    const filteredAccounts = allVisibleAccounts
+        .filter((post) => {
+            const search = searchQuery.toLowerCase();
+
+            const matchesSearch =
+                post.Type?.toLowerCase().includes(search) ||
+                post.Status?.toLowerCase().includes(search) ||
+                post.Email?.toLowerCase().includes(search) ||
+                post.ReferenceID?.toLowerCase().includes(search);
+
+            const matchesType = filterType ? post.Type === filterType : true;
+
+            const matchesDate = isDateInRange(post.date_created, dateCreatedFilterRange?.from, dateCreatedFilterRange?.to);
+
+            return matchesSearch && matchesType && matchesDate;
+        })
+        .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
+
+    // Pagination
+    const pageCount = Math.ceil(filteredAccounts.length / itemsPerPage);
+    const paginatedAccounts = filteredAccounts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    // Reset page on filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filterType, dateCreatedFilterRange]);
+
+    // Edit dialog handlers
+    function openEditDialog(post: { _id?: string; Remarks: string }) {
+        setEditingPost(post);
+        setRemarksInput(post.Remarks);
+        setEditDialogOpen(true);
+    }
+
+    async function saveUpdate() {
+        if (!editingPost?._id) {
+            toast.error("Cannot update: Missing record ID");
+            return;
+        }
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/ModuleSales/Activity/UpdateLog`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _id: editingPost._id, Remarks: remarksInput }),
+            });
+
+            if (!res.ok) {
+                const errorBody = await res.json();
+                console.error("Update failed:", errorBody);
+                throw new Error(errorBody.error || "Failed to update log");
+            }
+
+            setPosts((prev) =>
+                prev.map((p) => (p._id === editingPost._id ? { ...p, Remarks: remarksInput } : p))
+            );
+
+            toast.success("Activity log updated successfully");
+            setEditDialogOpen(false);
+            setEditingPost(null);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update activity log");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Badge color helper
+    function statusColor(status: string) {
+        if (!status) return "default";
+        if (status.toLowerCase() === "login") return "green";
+        if (status.toLowerCase() === "logout") return "red";
+        return "gray";
+    }
+
+    // Toggle expanded row
+    function toggleRow(id: string | undefined) {
+        if (!id) return;
+        setExpandedRows((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    }
+
+    // Duration formatter
+    const formatDuration = (ms: number): string => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (seconds > 0) parts.push(`${seconds}s`);
+
+        return parts.length > 0 ? parts.join(" ") : "0s";
+    };
+
+    // Compute Late / OT remarks
+    const computeTimeRemarks = (log: ActivityLog): { text: string; variant: "secondary" | "destructive" | "outline" } => {
+        const logDate = new Date(log.date_created);
+
+        const workStart = new Date(log.date_created);
+        workStart.setHours(8, 0, 0, 0);
+
+        const morningEnd = new Date(log.date_created);
+        morningEnd.setHours(12, 59, 59, 999);
+
+        const afternoonStart = new Date(log.date_created);
+        afternoonStart.setHours(13, 0, 0, 0);
+
+        const workEnd = new Date(log.date_created);
+        workEnd.setHours(17, 0, 0, 0);
+
+        const undertimeStart = new Date(log.date_created);
+        undertimeStart.setHours(13, 0, 0, 0);
+
+        const undertimeEnd = new Date(log.date_created);
+        undertimeEnd.setHours(16, 59, 59, 999);
+
+        if (log.Status.toLowerCase() === "login") {
+            if (logDate > workStart && logDate <= morningEnd) {
+                const lateMs = logDate.getTime() - workStart.getTime();
+                return { text: `Late by ${formatDuration(lateMs)}`, variant: "destructive" };
+            }
+
+            if (logDate >= afternoonStart) {
+                return { text: "Halfday", variant: "destructive" };
+            }
+
+            return { text: "On Time", variant: "secondary" };
+        }
+
+        if (log.Status.toLowerCase() === "logout") {
+            if (logDate >= undertimeStart && logDate <= undertimeEnd) {
+                const undertimeMs = workEnd.getTime() - logDate.getTime();
+                return { text: `Undertime by ${formatDuration(undertimeMs)}`, variant: "destructive" };
+            }
+
+            if (logDate > workEnd) {
+                const overtimeMs = logDate.getTime() - workEnd.getTime();
+                return { text: `OT +${formatDuration(overtimeMs)}`, variant: "outline" };
+            }
+
+            if (logDate.getTime() === workEnd.getTime()) {
+                return { text: "On Time", variant: "secondary" };
+            }
+
+            if (logDate < undertimeStart) {
+                return { text: "On Time", variant: "secondary" };
+            }
+
+            return { text: "On Time", variant: "secondary" };
+        }
+
+        return { text: "-", variant: "destructive" };
+    };
+
+    // Simulate loading while typing with debounce
+    useEffect(() => {
+        if (searchQuery === "") {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        const timeout = setTimeout(() => {
+            setLoading(false);
+            // Here you could do actual search or API fetch
+        }, 1000); // 1 second debounce
+
+        return () => clearTimeout(timeout);
+    }, [searchQuery]);
+
+    async function handleExport() {
+        if (!(userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources")) {
+            toast.error("You do not have permission to export data.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Activity Logs");
+
+            // Add header row
+            worksheet.addRow([
+                "ReferenceID",
+                "Email",
+                "Type",
+                "Status",
+                "Location",
+                "Date Created",
+                "Remarks",
+            ]);
+
+            // Add data rows
+            filteredAccounts.forEach((log) => {
+                worksheet.addRow([
+                    log.ReferenceID,
+                    log.Email,
+                    log.Type,
+                    log.Status,
+                    log.Location,
+                    new Date(log.date_created).toLocaleString(),
+                    log.Remarks || "",
+                ]);
+            });
+
+            // Format header row
+            worksheet.getRow(1).eachCell((cell) => {
+                cell.font = { bold: true };
+            });
+
+            // Generate buffer
+            const buffer = await workbook.xlsx.writeBuffer();
+
+            // Save file using file-saver
+            const blob = new Blob([buffer], {
+                type:
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+
+            saveAs(blob, `ActivityLogs_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            toast.success("Export successful!");
+        } catch (error) {
+            console.error("Export error:", error);
+            toast.error("Failed to export data.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <UserProvider>
+            <FormatProvider>
+                <SidebarProvider>
+                    <AppSidebar
+                        userId={userId ?? undefined}
+                        dateCreatedFilterRange={dateCreatedFilterRange}
+                        setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+                    />
+                    <SidebarInset>
+                        <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                            <SidebarTrigger className="-ml-1" />
+                            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                            <Breadcrumb>
+                                <BreadcrumbList>
+                                    <BreadcrumbItem>
+                                        <BreadcrumbPage>Activity Logs</BreadcrumbPage>
+                                    </BreadcrumbItem>
+                                </BreadcrumbList>
+                            </Breadcrumb>
+                        </header>
+
+                        <div className="flex flex-1 flex-col gap-4 p-4">
+                            <div className="flex items-center w-full max-w-md gap-2">
+                                {/* Search input container (relative for icon and spinner) */}
+                                <div className="relative flex-grow">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <Search className="h-5 w-5 text-gray-400" />
+                                    </div>
+
+                                    <Input
+                                        id="search"
+                                        type="text"
+                                        placeholder="Search by type, status, email, reference..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-10 pr-10 rounded-md w-full"
+                                    />
+
+                                    {loading && (
+                                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                            <Spinner className="h-5 w-5 text-gray-500" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Export button aligned right */}
+                                {(userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources") && (
+                                    <Button onClick={handleExport} className="whitespace-nowrap">
+                                        Export Data
+                                    </Button>
+                                )}
+                            </div>
+
+
+                            <div className="w-full overflow-x-auto">
+                                <Table>
+                                    <TableCaption>Recent Activity Logs</TableCaption>
+                                    <TableHeader>
+                                        <TableRow className="text-xs whitespace-nowrap cursor-pointer">
+                                            <TableHead>Photo</TableHead>
+                                            <TableHead>User</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Date Created</TableHead>
+                                            <TableHead>Time Remarks</TableHead>
+                                            <TableHead>Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+
+                                    <TableBody className="text-xs whitespace-nowrap">
+                                        {paginatedAccounts.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="text-center p-4">
+                                                    No records found.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+
+                                        {paginatedAccounts.map((post) => {
+                                            const user = usersMap[post.ReferenceID];
+                                            const isExpanded = post._id ? expandedRows.has(post._id) : false;
+
+                                            const createdDate = new Date(post.date_created);
+                                            const formattedDate = createdDate.toLocaleDateString();
+                                            const formattedTime = createdDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                                            return (
+                                                <Fragment key={post._id || post.ReferenceID}>
+                                                    {/* Primary Row */}
+                                                    <TableRow
+                                                        className="cursor-pointer hover:bg-gray-100"
+                                                        onClick={() => toggleRow(post._id)}
+                                                    >
+                                                        {/* Photo */}
+                                                        <TableCell>
+                                                            {post.PhotoURL ? (
+                                                                <img
+                                                                    src={post.PhotoURL}
+                                                                    alt="Photo"
+                                                                    className="h-8 w-8 rounded-md object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-8 w-8 rounded-md bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                                    N/A
+                                                                </div>
+                                                            )}
+                                                        </TableCell>
+
+                                                        {/* User */}
+                                                        <TableCell className="flex items-center gap-2">
+                                                            {user?.profilePicture ? (
+                                                                <img
+                                                                    src={user.profilePicture}
+                                                                    alt={`${user.Firstname} ${user.Lastname}`}
+                                                                    className="h-8 w-8 rounded-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                                    N/A
+                                                                </div>
+                                                            )}
+                                                            <span>
+                                                                {user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}
+                                                                <br />
+                                                                <span className="text-[8px]">{post.ReferenceID}</span>
+                                                            </span>
+                                                        </TableCell>
+
+                                                        <TableCell>{post.Email}</TableCell>
+                                                        <TableCell>{post.Type}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={`outline`} color={statusColor(post.Status)}>
+                                                                {post.Status}
+                                                            </Badge>
+                                                        </TableCell>
+
+                                                        {/* Date Created with time */}
+                                                        <TableCell>
+                                                            {formattedDate} <br /> <span className="text-xs text-gray-500">{formattedTime}</span>
+                                                        </TableCell>
+
+                                                        {/* Time Remarks */}
+                                                        <TableCell>
+                                                            {
+                                                                (() => {
+                                                                    const remarks = computeTimeRemarks(post);
+                                                                    return (
+                                                                        <Badge variant={remarks.variant}>
+                                                                            {remarks.text}
+                                                                        </Badge>
+                                                                    );
+                                                                })()
+                                                            }
+                                                        </TableCell>
+
+                                                        <TableCell>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    openEditDialog(post);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+
+                                                    {/* Expanded Detail Row */}
+                                                    {isExpanded && (
+                                                        <TableRow className="bg-gray-50">
+                                                            <TableCell colSpan={8} className="text-xs p-3">
+                                                                <div>
+                                                                    <strong>Location:</strong> {post.Location || "N/A"}
+                                                                </div>
+                                                                <div>
+                                                                    <strong>Remarks:</strong> {post.Remarks || "None"}
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </Fragment>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Pagination */}
+                            {pageCount > 1 && (
+                                <Pagination className="mt-4 flex justify-center">
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (currentPage === 1) return;
+                                                    setCurrentPage((p) => Math.max(p - 1, 1));
+                                                }}
+                                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                                            />
+                                        </PaginationItem>
+
+                                        <PaginationItem>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setCurrentPage(1);
+                                                }}
+                                                aria-current={currentPage === 1 ? "page" : undefined}
+                                                className={currentPage === 1 ? "font-bold underline" : ""}
+                                            >
+                                                1
+                                            </PaginationLink>
+                                        </PaginationItem>
+
+                                        {currentPage > 3 && (
+                                            <PaginationItem>
+                                                <PaginationEllipsis />
+                                            </PaginationItem>
+                                        )}
+
+                                        {Array.from(
+                                            { length: Math.min(pageCount - 2, 3) },
+                                            (_, i) => i + Math.max(2, currentPage - 1)
+                                        )
+                                            .filter((page) => page < pageCount)
+                                            .map((page) => (
+                                                <PaginationItem key={page}>
+                                                    <PaginationLink
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setCurrentPage(page);
+                                                        }}
+                                                        aria-current={currentPage === page ? "page" : undefined}
+                                                        className={currentPage === page ? "font-bold underline" : ""}
+                                                    >
+                                                        {page}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            ))}
+
+                                        {currentPage < pageCount - 2 && (
+                                            <PaginationItem>
+                                                <PaginationEllipsis />
+                                            </PaginationItem>
+                                        )}
+
+                                        {pageCount > 1 && (
+                                            <PaginationItem>
+                                                <PaginationLink
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setCurrentPage(pageCount);
+                                                    }}
+                                                    aria-current={currentPage === pageCount ? "page" : undefined}
+                                                    className={currentPage === pageCount ? "font-bold underline" : ""}
+                                                >
+                                                    {pageCount}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        )}
+
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (currentPage === pageCount) return;
+                                                    setCurrentPage((p) => Math.min(p + 1, pageCount));
+                                                }}
+                                                className={currentPage === pageCount ? "pointer-events-none opacity-50" : ""}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            )}
+
+                            {/* Edit Dialog */}
+                            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Remarks</DialogTitle>
+                                    </DialogHeader>
+                                    <textarea
+                                        className="w-full rounded border p-2"
+                                        rows={5}
+                                        value={remarksInput}
+                                        onChange={(e) => setRemarksInput(e.target.value)}
+                                    />
+                                    <DialogFooter className="flex justify-end gap-2">
+                                        <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                                            Cancel
+                                        </Button>
+                                        <Button onClick={saveUpdate} disabled={loading}>
+                                            {loading ? "Saving..." : "Save"}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </SidebarInset>
+                </SidebarProvider>
+            </FormatProvider>
+        </UserProvider>
+    );
+}

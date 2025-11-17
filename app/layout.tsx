@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { UserProvider } from "@/contexts/UserContext";
 import InstallPrompt from "./install-prompt";
 
 const inter = Inter({
@@ -27,19 +27,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        {/* meta theme-color removed */}
       </head>
       <body className={`${inter.variable} font-sans antialiased relative`}>
-        <ToastContainer />
-        {children}
+        <UserProvider>
+          {children}
+          <Toaster />
 
-        {/* InstallPrompt with fixed position and high z-index */}
-        <div className="fixed inset-0 z-[9999] pointer-events-none">
-          <InstallPrompt />
-        </div>
+          <div className="fixed inset-0 z-[9999] pointer-events-none">
+            <InstallPrompt />
+          </div>
 
-        <Analytics />
-        <SpeedInsights />
+          <Analytics />
+          <SpeedInsights />
+        </UserProvider>
       </body>
     </html>
   );
