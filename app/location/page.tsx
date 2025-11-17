@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { UserProvider, useUser } from "@/contexts/UserContext";
@@ -20,7 +21,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import LocationMap from "@/components/location-map";
+// Dynamically import LocationMap with SSR disabled
+const LocationMap = dynamic(() => import("@/components/location-map"), {
+  ssr: false,
+});
 
 interface ActivityLog {
   ReferenceID: string;

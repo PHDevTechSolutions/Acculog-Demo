@@ -1,9 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useEffect, useState } from "react";
 import L from "leaflet";
-import React from "react";
 
 interface UserInfo {
   Firstname: string;
@@ -23,17 +21,6 @@ interface ActivityLog {
   _id?: string;
 }
 
-// Fix leaflet icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
-
 interface LocationMapProps {
   postsWithLocation: ActivityLog[];
   usersMap: Record<string, UserInfo>;
@@ -43,6 +30,38 @@ export default function LocationMap({
   postsWithLocation,
   usersMap,
 }: LocationMapProps) {
+  const [MapContainer, setMapContainer] = useState<any>(null);
+  const [TileLayer, setTileLayer] = useState<any>(null);
+  const [Marker, setMarker] = useState<any>(null);
+  const [Popup, setPopup] = useState<any>(null);
+
+  useEffect(() => {
+    // Dynamically import react-leaflet and leaflet css on client-side only
+    Promise.all([
+      import("react-leaflet").then((mod) => {
+        setMapContainer(() => mod.MapContainer);
+        setTileLayer(() => mod.TileLayer);
+        setMarker(() => mod.Marker);
+        setPopup(() => mod.Popup);
+      }),
+    ]);
+
+    // Fix leaflet's default icon paths (needed when dynamically importing)
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+      iconUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+    });
+  }, []);
+
+  if (!MapContainer || !TileLayer || !Marker || !Popup) {
+    return <div>Loading map...</div>;
+  }
+
   const defaultCenter: [number, number] =
     postsWithLocation.length > 0
       ? [postsWithLocation[0].Latitude!, postsWithLocation[0].Longitude!]
