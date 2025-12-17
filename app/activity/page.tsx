@@ -504,7 +504,6 @@ export default function Page() {
                                         <TableRow className="text-xs whitespace-nowrap cursor-pointer">
                                             <TableHead>Photo</TableHead>
                                             <TableHead>User</TableHead>
-                                            <TableHead>Email</TableHead>
                                             <TableHead>Type</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Date Created</TableHead>
@@ -572,7 +571,6 @@ export default function Page() {
                                                             </span>
                                                         </TableCell>
 
-                                                        <TableCell>{post.Email}</TableCell>
                                                         <TableCell>{post.Type}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={`outline`} color={statusColor(post.Status)}>
