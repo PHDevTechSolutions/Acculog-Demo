@@ -372,28 +372,28 @@ export default function Page() {
 
               {!loading && !error && (
                 <div className="grid grid-cols-1 sm:grid-cols-7 gap-1 text-center select-none">
-                  {/* Weekday headers */}
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="font-semibold border-b py-1">{day}</div>
-                  ))}
-
                   {/* Days grid */}
                   {calendarDays.map((date, idx) => {
                     const dateKey = toLocalDateKey(date);
                     const logs = groupedByDate[dateKey] || [];
                     const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
                     const isToday = isSameDay(date, today);
+                    const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
 
                     return (
                       <div
                         key={idx}
-                        className={`min-h-[110px] p-2 rounded border flex flex-col ${isCurrentMonth
-                          ? "bg-white border-gray-300"
-                          : "bg-gray-50 text-gray-400 border-gray-200"
-                          } ${isToday ? "border-blue-500 border-2" : ""}`}
+                        className={`min-h-[110px] p-2 rounded border flex flex-col text-left
+            ${isCurrentMonth ? "bg-white border-gray-300" : "bg-gray-50 text-gray-400 border-gray-200"}
+            ${isToday ? "border-blue-500 border-2" : ""}
+          `}
                       >
-                        <div className="text-sm font-semibold mb-1 text-left">{date.getDate()}</div>
-                        <ul className="text-xs text-left overflow-auto flex-1 space-y-1 max-h-[90px]">
+                        {/* Always show day number + name */}
+                        <div className="text-sm font-semibold mb-1">
+                          {date.getDate()} - {dayName}
+                        </div>
+
+                        <ul className="text-xs overflow-auto flex-1 space-y-1 max-h-[90px]">
                           {logs.length === 0 && <li className="text-gray-400 italic">No events</li>}
                           {logs.map((log) => {
                             const user = usersMap[log.ReferenceID];
@@ -425,6 +425,7 @@ export default function Page() {
                   })}
                 </div>
               )}
+
 
               <CreateAttendance
                 open={createAttendanceOpen}

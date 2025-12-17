@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface ActivityLog {
@@ -37,29 +36,42 @@ export default function ActivityDialog({
   usersMap,
 }: ActivityDialogProps) {
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-xs sm:max-w-md md:max-w-lg mx-auto px-4 sm:px-6 md:px-8 rounded-lg">
         <DialogHeader>
           <DialogTitle>Event Details</DialogTitle>
-          <DialogHeader>
-            <div className="text-sm text-muted-foreground">
-              {selectedEvent ? (
-                <>
-                  <p><strong>User:</strong> {usersMap[selectedEvent.ReferenceID] ? `${usersMap[selectedEvent.ReferenceID].Firstname} ${usersMap[selectedEvent.ReferenceID].Lastname}` : "Unknown User"}</p>
-                  <p><strong>Type:</strong> {selectedEvent.Type}</p>
-                  <p><strong>Status:</strong> {selectedEvent.Status}</p>
-                  <p><strong>Location:</strong> {selectedEvent.Location}</p>
-                  <p><strong>Date:</strong> {new Date(selectedEvent.date_created).toLocaleString()}</p>
-                  {selectedEvent.Remarks && <p><strong>Remarks:</strong> {selectedEvent.Remarks}</p>}
-                </>
-              ) : (
-                <p>No event selected.</p>
-              )}
-            </div>
-          </DialogHeader>
+          <div className="text-xs text-left text-muted-foreground mt-2">
+            {selectedEvent ? (
+              <>
+                <p>
+                  <strong>User:</strong>{" "}
+                  {usersMap[selectedEvent.ReferenceID]
+                    ? `${usersMap[selectedEvent.ReferenceID].Firstname} ${usersMap[selectedEvent.ReferenceID].Lastname}`
+                    : "Unknown User"}
+                </p>
+                <p>
+                  <strong>Type:</strong> {selectedEvent.Type}
+                </p>
+                <p>
+                  <strong>Status:</strong> {selectedEvent.Status}
+                </p>
+                <p>
+                  <strong>Location:</strong> {selectedEvent.Location}
+                </p>
+                <p>
+                  <strong>Date:</strong>{" "}
+                  {new Date(selectedEvent.date_created).toLocaleString()}
+                </p>
+                {selectedEvent.Remarks && (
+                  <p>
+                    <strong>Remarks:</strong> {selectedEvent.Remarks}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p>No event selected.</p>
+            )}
+          </div>
         </DialogHeader>
       </DialogContent>
     </Dialog>

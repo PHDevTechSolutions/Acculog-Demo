@@ -14,7 +14,13 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/components/ui/sidebar";
 import { Table, TableCaption, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, PaginationEllipsis, } from "@/components/ui/pagination";
-
+import {
+    Item,
+    ItemContent,
+    ItemTitle,
+    ItemDescription,
+    ItemActions,
+} from "@/components/ui/item";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"
@@ -478,7 +484,7 @@ export default function Page() {
                                         placeholder="Search by type, status, email, reference..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 pr-10 rounded-md w-full"
+                                        className="pl-10 pr-10 rounded-md w-full text-xs"
                                     />
 
                                     {loading && (
@@ -498,138 +504,70 @@ export default function Page() {
 
 
                             <div className="w-full overflow-x-auto">
-                                <Table>
-                                    <TableCaption>Recent Activity Logs</TableCaption>
-                                    <TableHeader>
-                                        <TableRow className="text-xs whitespace-nowrap cursor-pointer">
-                                            <TableHead>Photo</TableHead>
-                                            <TableHead>User</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Date Created</TableHead>
-                                            <TableHead>Time Remarks</TableHead>
-                                            <TableHead>Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
+                                {paginatedAccounts.map((post) => {
+                                    const user = usersMap[post.ReferenceID];
+                                    const createdDate = new Date(post.date_created);
+                                    const formattedDate = createdDate.toLocaleDateString();
+                                    const formattedTime = createdDate.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    });
+                                    
+                                    return (
+                                        <Item
+                                            key={post._id || post.ReferenceID}
+                                            variant="outline"
+                                            className="mb-4"
+                                        >
+                                            <ItemContent>
+                                                <ItemTitle className="flex items-center gap-2">
+                                                    {/* Photo */}
+                                                    {post.PhotoURL ? (
+                                                        <img
+                                                            src={post.PhotoURL}
+                                                            alt="Photo"
+                                                            className="h-20 w-20 rounded-md object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-20 w-20 rounded-md bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                            N/A
+                                                        </div>
+                                                    )}
 
-                                    <TableBody className="text-xs whitespace-nowrap">
-                                        {paginatedAccounts.length === 0 && (
-                                            <TableRow>
-                                                <TableCell colSpan={8} className="text-center p-4">
-                                                    No records found.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-
-                                        {paginatedAccounts.map((post) => {
-                                            const user = usersMap[post.ReferenceID];
-                                            const isExpanded = post._id ? expandedRows.has(post._id) : false;
-
-                                            const createdDate = new Date(post.date_created);
-                                            const formattedDate = createdDate.toLocaleDateString();
-                                            const formattedTime = createdDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-                                            return (
-                                                <Fragment key={post._id || post.ReferenceID}>
-                                                    {/* Primary Row */}
-                                                    <TableRow
-                                                        className="cursor-pointer hover:bg-gray-100"
-                                                        onClick={() => toggleRow(post._id)}
-                                                    >
-                                                        {/* Photo */}
-                                                        <TableCell>
-                                                            {post.PhotoURL ? (
-                                                                <img
-                                                                    src={post.PhotoURL}
-                                                                    alt="Photo"
-                                                                    className="h-8 w-8 rounded-md object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="h-8 w-8 rounded-md bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                                                    N/A
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-
-                                                        {/* User */}
-                                                        <TableCell className="flex items-center gap-2">
-                                                            {user?.profilePicture ? (
-                                                                <img
-                                                                    src={user.profilePicture}
-                                                                    alt={`${user.Firstname} ${user.Lastname}`}
-                                                                    className="h-8 w-8 rounded-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                                                    N/A
-                                                                </div>
-                                                            )}
-                                                            <span>
-                                                                {user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}
-                                                                <br />
-                                                                <span className="text-[8px]">{post.ReferenceID}</span>
-                                                            </span>
-                                                        </TableCell>
-
-                                                        <TableCell>{post.Type}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={`outline`} color={statusColor(post.Status)}>
+                                                    {/* User Name and ReferenceID */}
+                                                    <div>
+                                                        <div className="font-semibold">
+                                                            {user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500">{post.ReferenceID}</div>
+                                                        <div className="text-[10px] text-gray-500"><strong>Type:</strong> {post.Type}</div>
+                                                        <div className="text-[10px] text-gray-500">
+                                                            <strong>Status:</strong>{" "}
+                                                            <Badge variant="outline" className="text-[8px]" color={statusColor(post.Status)}>
                                                                 {post.Status}
                                                             </Badge>
-                                                        </TableCell>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500"><strong>Date:</strong> {formattedDate} {formattedTime}</div>
+                                                        <div className="text-[10px] text-gray-500"><strong>Location:</strong> {post.Location || "N/A"}</div>
+                                                    </div>
+                                                </ItemTitle>
+                                            </ItemContent>
 
-                                                        {/* Date Created with time */}
-                                                        <TableCell>
-                                                            {formattedDate} <br /> <span className="text-xs text-gray-500">{formattedTime}</span>
-                                                        </TableCell>
-
-                                                        {/* Time Remarks */}
-                                                        <TableCell>
-                                                            {
-                                                                (() => {
-                                                                    const remarks = computeTimeRemarks(post);
-                                                                    return (
-                                                                        <Badge variant={remarks.variant}>
-                                                                            {remarks.text}
-                                                                        </Badge>
-                                                                    );
-                                                                })()
-                                                            }
-                                                        </TableCell>
-
-                                                        <TableCell>
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    openEditDialog(post);
-                                                                }}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-
-                                                    {/* Expanded Detail Row */}
-                                                    {isExpanded && (
-                                                        <TableRow className="bg-gray-50">
-                                                            <TableCell colSpan={8} className="text-xs p-3">
-                                                                <div>
-                                                                    <strong>Location:</strong> {post.Location || "N/A"}
-                                                                </div>
-                                                                <div>
-                                                                    <strong>Remarks:</strong> {post.Remarks || "None"}
-                                                                </div>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                </Fragment>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
+                                            <ItemActions>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openEditDialog(post);
+                                                    }}
+                                                >
+                                                    Edit
+                                                </Button>
+                                            </ItemActions>
+                                        </Item>
+                                    );
+                                })}
                             </div>
-
                             {/* Pagination */}
                             {pageCount > 1 && (
                                 <Pagination className="mt-4 flex justify-center">

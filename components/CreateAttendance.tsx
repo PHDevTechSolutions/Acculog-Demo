@@ -196,7 +196,7 @@ export default function CreateAttendance({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChangeAction}>
-      <DialogContent className="rounded-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="rounded-lg max-h-[90vh] overflow-y-auto w-full max-w-sm sm:max-w-lg md:max-w-lg mx-auto px-4 sm:px-6 md:px-8">
         <DialogHeader>
           <DialogTitle>Create Attendance</DialogTitle>
         </DialogHeader>
