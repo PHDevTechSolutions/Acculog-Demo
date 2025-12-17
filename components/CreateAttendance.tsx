@@ -19,6 +19,12 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FormData {
@@ -60,6 +66,9 @@ export default function CreateAttendance({
   const [longitude, setLongitude] = useState<number | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [lastStatus, setLastStatus] = useState<"Login" | "Logout" | null>(null);
+  const [lastTime, setLastTime] = useState<string | null>(null);
 
   // Auto-set Type to "On Field" on mount or open
   useEffect(() => {
@@ -107,6 +116,36 @@ export default function CreateAttendance({
     const data = await res.json();
     return data.secure_url;
   };
+
+  useEffect(() => {
+    const fetchLastStatus = async () => {
+      try {
+        const res = await fetch(
+          `/api/ModuleSales/Activity/LastStatus?referenceId=${userDetails.ReferenceID}`
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (data?.Status) {
+          setLastStatus(data.Status);
+          setLastTime(
+            new Date(data.date_created).toLocaleTimeString("en-PH", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
+        } else {
+          setLastStatus(null);
+          setLastTime(null);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchLastStatus();
+  }, [userDetails.ReferenceID]);
 
   const handleCreate = async () => {
     if (!capturedImage) return toast.error("Please capture a photo first.");
@@ -162,88 +201,100 @@ export default function CreateAttendance({
           <DialogTitle>Create Attendance</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row gap-6 mt-4">
-          {/* LEFT SIDE: CAMERA + captured image + extra fields (below camera) */}
-          <div className="flex-1 flex flex-col items-center">
-            <Camera onCaptureAction={(img) => setCapturedImage(img)} />
-            {capturedImage && (
-              <>
-                <img
-                  src={capturedImage}
-                  alt="preview"
-                  className="rounded-lg mt-4 border max-w-xl w-full"
-                />
+        <div className="flex flex-col gap-4 mt-4">
 
-                {/* Show these fields below the camera */}
-                <div className="w-full mt-4 space-y-4">
-                  <div className="grid gap-2">
-                    <Label>Status</Label>
-                    <Select
-                      value={formData.Status}
-                      onValueChange={(v) => onChangeAction("Status", v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Login">Login</SelectItem>
-                        <SelectItem value="Logout">Logout</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+          {/* CURRENT STATUS */}
+          {lastStatus && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
+              <p>
+                <strong>Current Status:</strong>{" "}
+                <span
+                  className={
+                    lastStatus === "Login"
+                      ? "text-green-600 font-semibold"
+                      : "text-red-600 font-semibold"
+                  }
+                >
+                  {lastStatus === "Login" ? "Logged In" : "Logged Out"}
+                </span>
+              </p>
 
-                  <div className="grid gap-2">
-                    <Label>Remarks</Label>
-                    <Textarea
-                      value={formData.Remarks}
-                      onChange={(e) => onChangeAction("Remarks", e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Location</Label>
-                    <Input disabled value={locationAddress} />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* RIGHT SIDE: Type + Submit */}
-          <div className="flex-1 space-y-4">
-            {/* Hidden inputs */}
-            <input type="hidden" value={formData.ReferenceID} />
-            <input type="hidden" value={formData.Email} />
-
-            {/* Type (disabled and pre-set) */}
-            <div className="grid gap-2">
-              <Select value="On Field" disabled>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="On Field">On Field</SelectItem>
-                </SelectContent>
-              </Select>
+              {lastTime && (
+                <p className="text-gray-500 mt-1">
+                  Last activity: {lastTime}
+                </p>
+              )}
             </div>
+          )}
 
-            {/* Submit Button */}
-            <Button
-              onClick={handleCreate}
-              disabled={
-                loading ||
-                !formData.Status ||
-                !capturedImage ||
-                locationAddress === "Fetching location..."
-              }
-              className="mt-4 w-full md:w-auto"
-            >
-              {loading ? "Saving..." : "Create Attendance"}
-            </Button>
-          </div>
+          {/* CAMERA */}
+          <Camera onCaptureAction={(img) => setCapturedImage(img)} />
+
+          {/* FORM FIELDS (SHOW AFTER CAPTURE) */}
+          {capturedImage && (
+            <>
+              {/* STATUS */}
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.Status}
+                  onValueChange={(v) => onChangeAction("Status", v)}
+                >
+                  <SelectTrigger
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs
+                           focus:ring-2 focus:ring-black focus:outline-none transition-all"
+                  >
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="Login" disabled={lastStatus === "Login"}>
+                      Login {lastStatus === "Login" && "(Current)"}
+                    </SelectItem>
+                    <SelectItem value="Logout" disabled={lastStatus === "Logout"}>
+                      Logout {lastStatus === "Logout" && "(Current)"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* REMARKS */}
+              <div className="grid gap-2">
+                <Label>Remarks</Label>
+                <Textarea
+                  value={formData.Remarks}
+                  onChange={(e) => onChangeAction("Remarks", e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Alert className="text-xs">
+                  <MapPin className="w-4 h-4 text-blue-500 mt-[3px]" />
+                  <AlertTitle className="font-bold">My Location</AlertTitle>
+                  <AlertDescription className="text-xs">{locationAddress}</AlertDescription>
+                </Alert>
+              </div>
+            </>
+          )}
+
+          {/* SUBMIT */}
+          <Button
+            onClick={handleCreate}
+            disabled={
+              loading ||
+              !formData.Status ||
+              !capturedImage ||
+              locationAddress === "Fetching location..."
+            }
+            className="w-full"
+          >
+            {loading ? "Saving..." : "Create Attendance"}
+          </Button>
+
         </div>
       </DialogContent>
     </Dialog>
+
   );
 }

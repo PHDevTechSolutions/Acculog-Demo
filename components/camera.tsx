@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { LuFlipHorizontal } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
+import { RefreshCcw, Camera as CameraIcon, SwitchCamera } from "lucide-react";
 
 interface CameraProps {
   onCaptureAction: (dataUrl: string) => void;
@@ -124,7 +124,8 @@ export default function Camera({ onCaptureAction }: CameraProps) {
   return (
     <div className="w-full flex flex-col items-center gap-3">
       {!permissionGranted && (
-        <Button onClick={requestCameraPermission} className="mb-4">
+        <Button onClick={requestCameraPermission} className="mb-4 h-20">
+          <CameraIcon />
           Start Camera
         </Button>
       )}
@@ -132,7 +133,7 @@ export default function Camera({ onCaptureAction }: CameraProps) {
       {/* Show select only if permission granted and no photo captured */}
       {permissionGranted && !capturedImage && devices.length > 0 && (
         <select
-          className="w-full max-w-xl p-2 border rounded"
+          className="w-full max-w-xl p-2 border rounded text-xs"
           value={selectedDeviceId}
           onChange={(e) => setSelectedDeviceId(e.target.value)}
         >
@@ -178,7 +179,7 @@ export default function Camera({ onCaptureAction }: CameraProps) {
       {/* Flip camera button */}
       {permissionGranted && !capturedImage && devices.length > 1 && (
         <Button onClick={flipCamera} className="flex gap-2">
-          <LuFlipHorizontal size={18} />
+          <SwitchCamera size={18} />
           Flip Camera
         </Button>
       )}
@@ -193,7 +194,8 @@ export default function Camera({ onCaptureAction }: CameraProps) {
             alt="Captured"
             className="w-full max-w-xs rounded shadow-md"
           />
-          <Button onClick={retakePhoto} variant="destructive" className="mt-3">
+          <Button onClick={retakePhoto} className="mt-3">
+            <RefreshCcw className="w-4 h-4" />
             Retake Photo
           </Button>
         </div>
