@@ -275,22 +275,22 @@ export default function CreateAttendance({
                   <AlertDescription className="text-xs">{locationAddress}</AlertDescription>
                 </Alert>
               </div>
+
+              {/* SUBMIT */}
+              <Button
+                onClick={handleCreate}
+                disabled={
+                  loading ||
+                  !formData.Status ||
+                  !capturedImage ||
+                  locationAddress === "Fetching location..."
+                }
+                className="w-full"
+              >
+                {loading ? "Saving..." : "Create Attendance"}
+              </Button>
             </>
           )}
-
-          {/* SUBMIT */}
-          <Button
-            onClick={handleCreate}
-            disabled={
-              loading ||
-              !formData.Status ||
-              !capturedImage ||
-              locationAddress === "Fetching location..."
-            }
-            className="w-full"
-          >
-            {loading ? "Saving..." : "Create Attendance"}
-          </Button>
 
         </div>
       </DialogContent>
