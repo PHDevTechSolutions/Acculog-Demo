@@ -364,7 +364,7 @@ export default function Page() {
                   className="flex-grow rounded border px-3 py-2 text-sm"
                   aria-label="Search events"
                 />
-                <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
+                <Button onClick={() => setCreateAttendanceOpen(true)}>+ Create Attendance</Button>
               </div>
 
               {loading && <p>Loading...</p>}
