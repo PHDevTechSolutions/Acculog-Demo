@@ -131,15 +131,6 @@ function DashboardContent() {
     return () => clearInterval(interval);
   }, []);
 
-
-  useEffect(() => {
-    if (dateCreatedFilterRange) {
-      localStorage.setItem("dateCreatedFilterRange", JSON.stringify(dateCreatedFilterRange));
-    } else {
-      localStorage.removeItem("dateCreatedFilterRange");
-    }
-  }, [dateCreatedFilterRange]);
-
   const queryUserId = searchParams?.get("id") ?? "";
   useEffect(() => {
     if (queryUserId && queryUserId !== userId) {
@@ -345,8 +336,6 @@ function DashboardContent() {
     userDetails &&
     userDetails.Role !== "Territory Sales Manager" &&
     userDetails.Role !== "Territory Sales Associate";
-
-
 
   // ---------------- Render ----------------
   return (
