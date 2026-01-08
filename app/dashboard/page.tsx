@@ -339,6 +339,8 @@ useEffect(() => {
 
   // ---------------- Render ----------------
   return (
+    <Suspense fallback={<div className="p-4">Loading dashboard…</div>}>
+
     <UserProvider>
       <FormatProvider>
         <SidebarProvider>
@@ -489,5 +491,6 @@ useEffect(() => {
         </SidebarProvider>
       </FormatProvider>
     </UserProvider>
+    </Suspense>
   );
 }
