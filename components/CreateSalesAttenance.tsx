@@ -30,6 +30,7 @@ import ManualLocationPicker from "./manual-location-picker";
 
 interface FormData {
   ReferenceID: string;
+  TSM: string;
   Email: string;
   Type: string;
   Status: string;
@@ -40,6 +41,7 @@ interface FormData {
 
 interface UserDetails {
   ReferenceID: string;
+  TSM: string;
   Email: string;
 }
 
@@ -215,6 +217,7 @@ useEffect(() => {
         Status: "",
         PhotoURL: "",
         Remarks: "",
+        TSM: userDetails.TSM,
       });
 
       setCapturedImage(null);

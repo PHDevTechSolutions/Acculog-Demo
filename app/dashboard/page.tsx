@@ -1,4 +1,3 @@
-//@ts-nocheck
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -32,6 +31,7 @@ interface ActivityLog {
   date_created: string;
   PhotoURL?: string;
   Remarks: string;
+  TSM: string;
   _id?: string;
 }
 
@@ -39,6 +39,7 @@ interface UserInfo {
   Firstname: string;
   Lastname: string;
   profilePicture?: string;
+  TSM: string;
 }
 
 interface UserDetails {
@@ -51,6 +52,7 @@ interface UserDetails {
   Company?: string;
   ReferenceID: string;
   profilePicture?: string;
+  TSM: string;
 }
 
 interface FormData {
@@ -60,6 +62,7 @@ interface FormData {
   Status: string;
   PhotoURL: string;
   Remarks: string;
+  TSM: string;
   _id?: string;
 }
 
@@ -166,6 +169,7 @@ useEffect(() => {
     Status: "",
     PhotoURL: "",
     Remarks: "",
+    TSM: "",
   });
 
   const onChangeAction = (field: keyof FormData, value: any) => {
@@ -213,6 +217,7 @@ useEffect(() => {
           Company: data.Company ?? "",
           ReferenceID: data.ReferenceID ?? "",
           profilePicture: data.profilePicture ?? "",
+          TSM: data.TSM ?? ""
         });
         setError(null);
       } catch (err) {
@@ -231,6 +236,7 @@ useEffect(() => {
         ...prev,
         ReferenceID: userDetails.ReferenceID,
         Email: userDetails.Email,
+        TSM: userDetails.TSM,
       }));
     }
   }, [userDetails]);
@@ -252,6 +258,7 @@ useEffect(() => {
             Firstname: user.Firstname,
             Lastname: user.Lastname,
             profilePicture: user.profilePicture,
+            TSM: user.TSM,
           };
         });
         setUsersMap(map);
@@ -446,6 +453,7 @@ useEffect(() => {
                 userDetails={{
                   ReferenceID: userDetails?.ReferenceID ?? "",
                   Email: userDetails?.Email ?? "",
+                  TSM: userDetails?.TSM ?? ""
                 }}
                 fetchAccountAction={fetchAccountAction}
                 setFormAction={setFormData}
@@ -460,6 +468,7 @@ useEffect(() => {
             userDetails={{
               ReferenceID: userDetails?.ReferenceID ?? "",
               Email: userDetails?.Email ?? "",
+              TSM: userDetails?.TSM ?? ""
             }}
             fetchAccountAction={fetchAccountAction}
             setFormAction={setFormData}

@@ -23,6 +23,7 @@ export default async function addActivityLog(
       PhotoURL,
       SitePhotoURL, // ✅ still allowed
       Remarks,
+      TSM,
     } = req.body;
 
     if (!ReferenceID || !Email || !Type || !Status) {
@@ -90,6 +91,7 @@ export default async function addActivityLog(
       Type,
       Status,
       Remarks,
+      TSM,
       date_created: new Date(),
     };
 

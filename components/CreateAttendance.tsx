@@ -34,12 +34,14 @@ interface FormData {
   Status: string;
   PhotoURL: string;
   Remarks: string;
+  TSM: string;
   _id?: string;
 }
 
 interface UserDetails {
   ReferenceID: string;
   Email: string;
+  TSM: string;
 }
 
 interface CreateAttendanceProps {
@@ -184,6 +186,7 @@ export default function CreateAttendance({
         Status: "",
         PhotoURL: "",
         Remarks: "",
+        TSM: "",
       });
 
       setCapturedImage(null);
