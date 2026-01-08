@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -21,6 +21,8 @@ import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
 
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
+
+export const dynamic = "force-dynamic";
 
 // ---------------- Interfaces ----------------
 interface ActivityLog {
