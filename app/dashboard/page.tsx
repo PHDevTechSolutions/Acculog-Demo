@@ -337,6 +337,17 @@ function DashboardContent() {
     setDialogOpen(true);
   };
 
+  const isTSMorTSA =
+    userDetails?.Role === "Territory Sales Manager" ||
+    userDetails?.Role === "Territory Sales Associate";
+
+  const isNotTSMorTSA =
+    userDetails &&
+    userDetails.Role !== "Territory Sales Manager" &&
+    userDetails.Role !== "Territory Sales Associate";
+
+
+
   // ---------------- Render ----------------
   return (
     <>
@@ -380,8 +391,22 @@ function DashboardContent() {
               className="flex-grow rounded border px-3 py-2 text-sm"
               aria-label="Search events"
             />
-            <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
-            <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create TSA Attendance</Button>
+            {/* 👉 PARA SA HINDI TSM / TSA */}
+            {isNotTSMorTSA && (
+              <Button onClick={() => setCreateAttendanceOpen(true)}>
+                Create Attendance
+              </Button>
+            )}
+
+            {/* 👉 PARA SA TSM / TSA LANG */}
+            {isTSMorTSA && (
+              <Button onClick={() => setCreateSalesAttendanceOpen(true)}>
+                Create TSA Attendance
+              </Button>
+            )}
+
+
+
           </div>
 
           {loading && <p>Loading...</p>}
@@ -443,35 +468,37 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* All Button*/}
-          <CreateAttendance
-            open={createAttendanceOpen}
-            onOpenChangeAction={setCreateAttendanceOpen}
-            formData={formData}
-            onChangeAction={onChangeAction}
-            userDetails={{
-              ReferenceID: userDetails?.ReferenceID ?? "",
-              Email: userDetails?.Email ?? "",
-              TSM: userDetails?.TSM ?? ""
-            }}
-            fetchAccountAction={fetchAccountAction}
-            setFormAction={setFormData}
-          />
+          {isNotTSMorTSA && (
+            <CreateAttendance
+              open={createAttendanceOpen}
+              onOpenChangeAction={setCreateAttendanceOpen}
+              formData={formData}
+              onChangeAction={onChangeAction}
+              userDetails={{
+                ReferenceID: userDetails?.ReferenceID ?? "",
+                Email: userDetails?.Email ?? "",
+                TSM: userDetails?.TSM ?? ""
+              }}
+              fetchAccountAction={fetchAccountAction}
+              setFormAction={setFormData}
+            />
+          )}
 
-          {/* TSA Button*/}
-          <CreateSalesAttendance
-            open={createSalesAttendanceOpen}
-            onOpenChangeAction={setCreateSalesAttendanceOpen}
-            formData={formData}
-            onChangeAction={onChangeAction}
-            userDetails={{
-              ReferenceID: userDetails?.ReferenceID ?? "",
-              Email: userDetails?.Email ?? "",
-              TSM: userDetails?.TSM ?? ""
-            }}
-            fetchAccountAction={fetchAccountAction}
-            setFormAction={setFormData}
-          />
+          {isTSMorTSA && (
+            <CreateSalesAttendance
+              open={createSalesAttendanceOpen}
+              onOpenChangeAction={setCreateSalesAttendanceOpen}
+              formData={formData}
+              onChangeAction={onChangeAction}
+              userDetails={{
+                ReferenceID: userDetails?.ReferenceID ?? "",
+                Email: userDetails?.Email ?? "",
+                TSM: userDetails?.TSM ?? ""
+              }}
+              fetchAccountAction={fetchAccountAction}
+              setFormAction={setFormData}
+            />
+          )}
 
           <ActivityDialog
             open={dialogOpen}
