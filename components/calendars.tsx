@@ -60,19 +60,18 @@ export function Calendars({
 
                       return (
                         <SidebarMenuItem key={title}>
-                          <Link href={href} passHref legacyBehavior>
-                            <a
-                              className={`flex items-center gap-2 w-full px-4 py-2 rounded text-sm ${
-                                isActive
-                                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
-                                  : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          <Link
+                            href={href}
+                            className={`flex items-center gap-2 w-full px-4 py-2 rounded text-sm ${isActive
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
+                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                               }`}
-                            >
-                              {Icon && <Icon className="w-4 h-4" />}
-                              {title}
-                            </a>
+                          >
+                            {Icon && <Icon className="w-4 h-4" />}
+                            {title}
                           </Link>
                         </SidebarMenuItem>
+
                       );
                     })}
                   </SidebarMenu>
