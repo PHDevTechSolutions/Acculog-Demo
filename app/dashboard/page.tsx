@@ -1,10 +1,10 @@
-
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { FormatProvider } from "@/contexts/FormatContext";
+import { Suspense } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import {
@@ -21,8 +21,6 @@ import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
 
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
-
-export const dynamic = "force-dynamic";
 
 // ---------------- Interfaces ----------------
 interface ActivityLog {
