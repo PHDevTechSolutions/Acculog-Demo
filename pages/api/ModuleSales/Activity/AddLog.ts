@@ -21,6 +21,7 @@ export default async function addActivityLog(
       Latitude,
       Longitude,
       PhotoURL,
+      SitePhotoURL, // ✅ still allowed
       Remarks,
     } = req.body;
 
@@ -31,30 +32,55 @@ export default async function addActivityLog(
     const db = await connectToDatabase();
     const activityLogsCollection = db.collection("TaskLog");
 
-    /* 🕒 TODAY RANGE */
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    /* 🕒 8:00 AM DAY WINDOW (AUTO RESET) */
+    const now = new Date();
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(now);
+    startOfDay.setHours(8, 0, 0, 0);
 
-    /* 🔍 LAST ACTIVITY TODAY */
+    if (now < startOfDay) {
+      startOfDay.setDate(startOfDay.getDate() - 1);
+    }
+
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    endOfDay.setMilliseconds(-1);
+
+    /* 🔍 LAST ACTIVITY (UNCHANGED) */
     const lastActivityToday = await activityLogsCollection.findOne(
       {
         ReferenceID,
         date_created: {
-          $gte: startOfToday,
-          $lte: endOfToday,
+          $gte: startOfDay,
+          $lte: endOfDay,
         },
       },
       { sort: { date_created: -1 } }
     );
 
-    /* 🔒 RULE: PREVENT SAME STATUS TWICE IN A ROW */
+    /* 🔒 PREVENT SAME STATUS TWICE */
     if (lastActivityToday?.Status === Status) {
       return res.status(409).json({
         error: `You are already ${Status.toLowerCase()}.`,
       });
+    }
+
+    /* 🚫 SITE VISIT LIMIT (COUNT ONLY, NO SITE ACTION) */
+    if (Type === "Site Visit") {
+      const siteVisitCount = await activityLogsCollection.countDocuments({
+        ReferenceID,
+        Type: "Site Visit",
+        date_created: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      });
+
+      if (siteVisitCount >= 4) {
+        return res.status(403).json({
+          error: "Daily Site Visit limit reached. Resets at 8:00 AM.",
+        });
+      }
     }
 
     /* 📌 INSERT LOG */
@@ -67,10 +93,11 @@ export default async function addActivityLog(
       date_created: new Date(),
     };
 
-    if (Location)  newLog.Location  = Location;
-    if (Latitude)  newLog.Latitude  = Latitude;
+    if (Location) newLog.Location = Location;
+    if (Latitude) newLog.Latitude = Latitude;
     if (Longitude) newLog.Longitude = Longitude;
-    if (PhotoURL)  newLog.PhotoURL  = PhotoURL;
+    if (PhotoURL) newLog.PhotoURL = PhotoURL;
+    if (SitePhotoURL) newLog.SitePhotoURL = SitePhotoURL;
 
     const result = await activityLogsCollection.insertOne(newLog);
 

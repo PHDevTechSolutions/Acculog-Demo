@@ -8,7 +8,7 @@ interface CameraProps {
   onCaptureAction: (dataUrl: string) => void;
 }
 
-const COUNTDOWN_SECONDS = 4;
+const COUNTDOWN_SECONDS = 1;
 
 export default function Camera({ onCaptureAction }: CameraProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);

@@ -19,6 +19,8 @@ import ActivityDialog from "@/components/dashboard-dialog";
 import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
 
+import CreateSalesAttendance from "@/components/CreateSalesAttenance";
+
 // ---------------- Interfaces ----------------
 interface ActivityLog {
   ReferenceID: string;
@@ -75,6 +77,7 @@ function generateCalendarDays(year: number, month: number): Date[] {
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const firstWeekday = firstDayOfMonth.getDay();
 
+
   for (let i = firstWeekday - 1; i >= 0; i--) {
     days.push(new Date(year, month, 1 - i - 1));
   }
@@ -101,22 +104,28 @@ export default function Page() {
   const searchParams = useSearchParams();
   const { userId, setUserId } = useUser();
   const router = useRouter();
+  const [createSalesAttendanceOpen, setCreateSalesAttendanceOpen] = useState(false);
 
   const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<DateRange | undefined>(undefined);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("dateCreatedFilterRange");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.from) parsed.from = new Date(parsed.from);
-        if (parsed?.to) parsed.to = new Date(parsed.to);
-        setDateCreatedFilterRange(parsed);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+useEffect(() => {
+  let interval: NodeJS.Timeout;
+
+  const load = async () => {
+    setLoading(true);
+    await fetchAccountAction();
+    setLoading(false);
+  };
+
+  load(); // initial
+
+  interval = setInterval(() => {
+    fetchAccountAction(); // 🔁 refresh logs
+  }, 5000); // ⏱ every 5 seconds
+
+  return () => clearInterval(interval);
+}, []);
+
 
   useEffect(() => {
     if (dateCreatedFilterRange) {
@@ -364,7 +373,8 @@ export default function Page() {
                   className="flex-grow rounded border px-3 py-2 text-sm"
                   aria-label="Search events"
                 />
-                <Button onClick={() => setCreateAttendanceOpen(true)}>+ Create Attendance</Button>
+                <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
+                <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create TSA Attendance</Button>
               </div>
 
               {loading && <p>Loading...</p>}
@@ -426,7 +436,7 @@ export default function Page() {
                 </div>
               )}
 
-
+              {/* All Button*/}
               <CreateAttendance
                 open={createAttendanceOpen}
                 onOpenChangeAction={setCreateAttendanceOpen}
@@ -439,6 +449,20 @@ export default function Page() {
                 fetchAccountAction={fetchAccountAction}
                 setFormAction={setFormData}
               />
+
+              {/* TSA Button*/}
+          <CreateSalesAttendance
+            open={createSalesAttendanceOpen}
+            onOpenChangeAction={setCreateSalesAttendanceOpen}
+            formData={formData}
+            onChangeAction={onChangeAction}
+            userDetails={{
+              ReferenceID: userDetails?.ReferenceID ?? "",
+              Email: userDetails?.Email ?? "",
+            }}
+            fetchAccountAction={fetchAccountAction}
+            setFormAction={setFormData}
+          />
 
               <ActivityDialog
                 open={dialogOpen}
