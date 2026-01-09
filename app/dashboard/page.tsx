@@ -1,7 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { FormatProvider } from "@/contexts/FormatContext";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -17,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import ActivityDialog from "@/components/dashboard-dialog";
 import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
-
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
 
 // ---------------- Interfaces ----------------
@@ -80,7 +81,6 @@ function generateCalendarDays(year: number, month: number): Date[] {
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const firstWeekday = firstDayOfMonth.getDay();
 
-
   for (let i = firstWeekday - 1; i >= 0; i--) {
     days.push(new Date(year, month, 1 - i - 1));
   }
@@ -114,36 +114,6 @@ export default function Page() {
   const [posts, setPosts] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [usersMap, setUsersMap] = useState<Record<string, UserInfo>>({});
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    const load = async () => {
-      setLoading(true);
-      await fetchAccountAction();
-      setLoading(false);
-    };
-
-    load(); // initial
-
-    interval = setInterval(() => {
-      fetchAccountAction(); // 🔁 refresh logs
-    }, 5000); // ⏱ every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (queryUserId && queryUserId !== userId) {
-      setUserId(queryUserId);
-    }
-  }, [queryUserId, userId, setUserId]);
-
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
-    if (dateCreatedFilterRange?.from) return new Date(dateCreatedFilterRange.from);
-    return new Date();
-  });
-
   const [selectedEvent, setSelectedEvent] = useState<ActivityLog | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -157,6 +127,35 @@ export default function Page() {
     PhotoURL: "",
     Remarks: "",
     TSM: "",
+  });
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const load = async () => {
+      setLoading(true);
+      await fetchAccountAction();
+      setLoading(false);
+    };
+
+    load(); // initial
+
+    interval = setInterval(() => {
+      fetchAccountAction(); // refresh logs every 5 seconds
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (queryUserId && queryUserId !== userId) {
+      setUserId(queryUserId);
+    }
+  }, [queryUserId, userId, setUserId]);
+
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+    if (dateCreatedFilterRange?.from) return new Date(dateCreatedFilterRange.from);
+    return new Date();
   });
 
   const onChangeAction = (field: keyof FormData, value: any) => {
@@ -175,13 +174,11 @@ export default function Page() {
     }
   };
 
-  // Fetch posts on mount
   useEffect(() => {
     setLoading(true);
     fetchAccountAction().finally(() => setLoading(false));
   }, []);
 
-  // Fetch user details
   useEffect(() => {
     if (!queryUserId) {
       setError("User ID is missing.");
@@ -216,7 +213,6 @@ export default function Page() {
     })();
   }, [queryUserId]);
 
-  // Autofill formData from userDetails
   useEffect(() => {
     if (userDetails) {
       setFormData((prev) => ({
@@ -228,7 +224,6 @@ export default function Page() {
     }
   }, [userDetails]);
 
-  // Fetch users for mapping names
   useEffect(() => {
     if (posts.length === 0) return;
 
@@ -352,7 +347,7 @@ export default function Page() {
                   Prev
                 </button>
                 <button onClick={goToNextMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                  Nexts
+                  Next
                 </button>
               </div>
             </header>
@@ -431,7 +426,7 @@ export default function Page() {
                 </div>
               )}
 
-              {/* All Button*/}
+              {/* Create Attendance Dialog */}
               <CreateAttendance
                 open={createAttendanceOpen}
                 onOpenChangeAction={setCreateAttendanceOpen}
@@ -446,7 +441,7 @@ export default function Page() {
                 setFormAction={setFormData}
               />
 
-              {/* TSA Button*/}
+              {/* Create TSA Attendance Dialog */}
               <CreateSalesAttendance
                 open={createSalesAttendanceOpen}
                 onOpenChangeAction={setCreateSalesAttendanceOpen}
@@ -461,6 +456,7 @@ export default function Page() {
                 setFormAction={setFormData}
               />
 
+              {/* Activity Dialog */}
               <ActivityDialog
                 open={dialogOpen}
                 onOpenChange={(open) => {
