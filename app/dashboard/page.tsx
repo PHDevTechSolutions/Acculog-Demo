@@ -106,34 +106,14 @@ function isSameDay(d1: Date, d2: Date) {
 export default function Page() {
   const searchParams = useSearchParams();
   const { userId, setUserId } = useUser();
-  const router = useRouter();
+  const queryUserId = searchParams?.get("id") ?? "";
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [createSalesAttendanceOpen, setCreateSalesAttendanceOpen] = useState(false);
-
   const [dateCreatedFilterRange, setDateCreatedFilterRange] = useState<DateRange | undefined>(undefined);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("dateCreatedFilterRange");
-      if (saved) {
-        try {
-          setDateCreatedFilterRange(JSON.parse(saved));
-        } catch {
-          setDateCreatedFilterRange(undefined);
-        }
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (dateCreatedFilterRange) {
-        localStorage.setItem("dateCreatedFilterRange", JSON.stringify(dateCreatedFilterRange));
-      } else {
-        localStorage.removeItem("dateCreatedFilterRange");
-      }
-    }
-  }, [dateCreatedFilterRange]);
-
+  const [error, setError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<ActivityLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [usersMap, setUsersMap] = useState<Record<string, UserInfo>>({});
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -153,19 +133,11 @@ export default function Page() {
     return () => clearInterval(interval);
   }, []);
 
-
-  const queryUserId = searchParams?.get("id") ?? "";
   useEffect(() => {
     if (queryUserId && queryUserId !== userId) {
       setUserId(queryUserId);
     }
   }, [queryUserId, userId, setUserId]);
-
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [posts, setPosts] = useState<ActivityLog[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [usersMap, setUsersMap] = useState<Record<string, UserInfo>>({});
 
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     if (dateCreatedFilterRange?.from) return new Date(dateCreatedFilterRange.from);
