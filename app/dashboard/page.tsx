@@ -364,7 +364,7 @@ export default function Page() {
                   aria-label="Search events"
                 />
                 {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
-                  <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create TSA Attendance</Button>
+                  <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create Attendance</Button>
                 ) : (
                   <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
                 )}
