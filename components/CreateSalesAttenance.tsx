@@ -1,5 +1,5 @@
 "use client";
-
+import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Camera from "./camera";
@@ -26,7 +26,10 @@ import {
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-
+const ManualLocationPicker = dynamic(
+  () => import("./manual-location-picker"),
+  { ssr: false }
+);
 
 interface FormData {
   ReferenceID: string;
@@ -324,7 +327,21 @@ export default function CreateAttendance({
                 <AlertDescription>{locationAddress}</AlertDescription>
               </Alert>
 
-             
+              {formData.Type === "Site Visit" && (
+                <div className="mt-2">
+                  <ManualLocationPicker
+                    latitude={manualLat ?? latitude}
+                    longitude={manualLng ?? longitude}
+                    onChange={(lat, lng, address) => {
+                      setManualLat(lat);
+                      setManualLng(lng);
+                      if (address) {
+                        setLocationAddress(address);
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
               <Button
                 onClick={handleCreate}
