@@ -26,7 +26,7 @@ import {
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import ManualLocationPicker from "./manual-location-picker";
+
 
 interface FormData {
   ReferenceID: string;
@@ -79,6 +79,7 @@ export default function CreateAttendance({
 
   const [loginCountToday, setLoginCountToday] = useState(0);
 
+
   useEffect(() => {
     setManualLat(null);
     setManualLng(null);
@@ -93,8 +94,12 @@ export default function CreateAttendance({
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
         )
           .then((res) => res.json())
-          .then((data) => setLocationAddress(data.display_name || "Location detected"))
-          .catch(() => setLocationAddress("Location detected (no address)"));
+          .then((data) =>
+            setLocationAddress(data.display_name || "Location detected")
+          )
+          .catch(() =>
+            setLocationAddress("Location detected (no address)")
+          );
       },
       () => {
         setLocationAddress("Location not allowed by user");
@@ -115,10 +120,13 @@ export default function CreateAttendance({
     imgData.append("file", base64);
     imgData.append("upload_preset", "Xchire");
 
-    const res = await fetch("https://api.cloudinary.com/v1_1/dhczsyzcz/image/upload", {
-      method: "POST",
-      body: imgData,
-    });
+    const res = await fetch(
+      "https://api.cloudinary.com/v1_1/dhczsyzcz/image/upload",
+      {
+        method: "POST",
+        body: imgData,
+      }
+    );
 
     const data = await res.json();
     return data.secure_url;
@@ -150,32 +158,24 @@ export default function CreateAttendance({
       }
     };
 
-    fetchSummary();
+    fetchSummary(); // initial load
 
-    interval = setInterval(fetchSummary, 3000);
+    interval = setInterval(fetchSummary, 3000); // ⏱ every 3 seconds
 
     return () => clearInterval(interval);
   }, [userDetails.ReferenceID, open]);
 
   const handleCreate = async () => {
     if (!formData.Status) {
-      toast.error("Please select Login or Logout.");
-      return;
+      return toast.error("Please select Login or Logout.");
     }
 
-    if (!capturedImage) {
-      toast.error("Please capture a photo first.");
-      return;
-    }
-
-    if (!locationAddress || locationAddress === "Fetching location...") {
-      toast.error("Location not ready yet.");
-      return;
-    }
+    if (!capturedImage) return toast.error("Please capture a photo first.");
+    if (!locationAddress || locationAddress === "Fetching location...")
+      return toast.error("Location not ready yet.");
 
     if (formData.Type === "Site Visit" && !siteCapturedImage) {
-      toast.error("Please capture Site Visit photo.");
-      return;
+      return toast.error("Please capture Site Visit photo.");
     }
 
     setLoading(true);
@@ -249,7 +249,9 @@ export default function CreateAttendance({
                 </span>
               </p>
 
-              {lastTime && <p className="text-gray-500 mt-1">Last activity: {lastTime}</p>}
+              {lastTime && (
+                <p className="text-gray-500 mt-1">Last activity: {lastTime}</p>
+              )}
 
               <p className="mt-1 text-blue-600 font-semibold">
                 Total logins today: {loginCountToday}
@@ -263,7 +265,10 @@ export default function CreateAttendance({
             <>
               <div className="grid gap-2">
                 <Label>Status</Label>
-                <Select value={formData.Status} onValueChange={(v) => onChangeAction("Status", v)}>
+                <Select
+                  value={formData.Status}
+                  onValueChange={(v) => onChangeAction("Status", v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
@@ -280,7 +285,10 @@ export default function CreateAttendance({
 
               <div className="grid gap-2">
                 <Label>Type</Label>
-                <Select value={formData.Type} onValueChange={(v) => onChangeAction("Type", v)}>
+                <Select
+                  value={formData.Type}
+                  onValueChange={(v) => onChangeAction("Type", v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -294,7 +302,9 @@ export default function CreateAttendance({
               {formData.Type === "Site Visit" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Photo</Label>
-                  <Camera onCaptureAction={(img) => setSiteCapturedImage(img)} />
+                  <Camera
+                    onCaptureAction={(img) => setSiteCapturedImage(img)}
+                  />
                 </div>
               )}
 
@@ -302,7 +312,9 @@ export default function CreateAttendance({
                 <Label>Remarks</Label>
                 <Textarea
                   value={formData.Remarks}
-                  onChange={(e) => onChangeAction("Remarks", e.target.value)}
+                  onChange={(e) =>
+                    onChangeAction("Remarks", e.target.value)
+                  }
                 />
               </div>
 
@@ -312,21 +324,7 @@ export default function CreateAttendance({
                 <AlertDescription>{locationAddress}</AlertDescription>
               </Alert>
 
-              {formData.Type === "Site Visit" && (
-                <div className="mt-2">
-                  <ManualLocationPicker
-                    latitude={manualLat ?? latitude}
-                    longitude={manualLng ?? longitude}
-                    onChange={(lat, lng, address) => {
-                      setManualLat(lat);
-                      setManualLng(lng);
-                      if (address) {
-                        setLocationAddress(address);
-                      }
-                    }}
-                  />
-                </div>
-              )}
+             
 
               <Button
                 onClick={handleCreate}
