@@ -363,8 +363,11 @@ export default function Page() {
                   className="flex-grow rounded border px-3 py-2 text-sm"
                   aria-label="Search events"
                 />
-                <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
-                <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create TSA Attendance</Button>
+                {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
+                  <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create TSA Attendance</Button>
+                ) : (
+                  <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
+                )}
               </div>
 
               {loading && <p>Loading...</p>}
