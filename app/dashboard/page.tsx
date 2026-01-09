@@ -380,7 +380,7 @@ export default function Page() {
                   Prev
                 </button>
                 <button onClick={goToNextMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                  Next
+                  Nexts
                 </button>
               </div>
             </header>
