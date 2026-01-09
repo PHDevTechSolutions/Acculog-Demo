@@ -79,7 +79,6 @@ export default function CreateAttendance({
 
   const [loginCountToday, setLoginCountToday] = useState(0);
 
-
   useEffect(() => {
     setManualLat(null);
     setManualLng(null);
@@ -94,12 +93,8 @@ export default function CreateAttendance({
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
         )
           .then((res) => res.json())
-          .then((data) =>
-            setLocationAddress(data.display_name || "Location detected")
-          )
-          .catch(() =>
-            setLocationAddress("Location detected (no address)")
-          );
+          .then((data) => setLocationAddress(data.display_name || "Location detected"))
+          .catch(() => setLocationAddress("Location detected (no address)"));
       },
       () => {
         setLocationAddress("Location not allowed by user");
@@ -120,64 +115,67 @@ export default function CreateAttendance({
     imgData.append("file", base64);
     imgData.append("upload_preset", "Xchire");
 
-    const res = await fetch(
-      "https://api.cloudinary.com/v1_1/dhczsyzcz/image/upload",
-      {
-        method: "POST",
-        body: imgData,
-      }
-    );
+    const res = await fetch("https://api.cloudinary.com/v1_1/dhczsyzcz/image/upload", {
+      method: "POST",
+      body: imgData,
+    });
 
     const data = await res.json();
     return data.secure_url;
   };
 
-useEffect(() => {
-  if (!open) return;
+  useEffect(() => {
+    if (!open) return;
 
-  let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout;
 
-  const fetchSummary = async () => {
-    const res = await fetch(
-      `/api/ModuleSales/Activity/LoginSummary?referenceId=${userDetails.ReferenceID}`
-    );
-    if (!res.ok) return;
-
-    const data = await res.json();
-
-    setLastStatus(data.lastStatus);
-    setLoginCountToday(data.loginCount);
-
-    if (data.lastTime) {
-      setLastTime(
-        new Date(data.lastTime).toLocaleTimeString("en-PH", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+    const fetchSummary = async () => {
+      const res = await fetch(
+        `/api/ModuleSales/Activity/LoginSummary?referenceId=${userDetails.ReferenceID}`
       );
-    }
-  };
+      if (!res.ok) return;
 
-  fetchSummary(); // initial load
+      const data = await res.json();
 
-  interval = setInterval(fetchSummary, 3000); // ⏱ every 3 seconds
+      setLastStatus(data.lastStatus);
+      setLoginCountToday(data.loginCount);
 
-  return () => clearInterval(interval);
-}, [userDetails.ReferenceID, open]);
+      if (data.lastTime) {
+        setLastTime(
+          new Date(data.lastTime).toLocaleTimeString("en-PH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
+      }
+    };
 
+    fetchSummary();
 
+    interval = setInterval(fetchSummary, 3000);
+
+    return () => clearInterval(interval);
+  }, [userDetails.ReferenceID, open]);
 
   const handleCreate = async () => {
     if (!formData.Status) {
-      return toast.error("Please select Login or Logout.");
+      toast.error("Please select Login or Logout.");
+      return;
     }
 
-    if (!capturedImage) return toast.error("Please capture a photo first.");
-    if (!locationAddress || locationAddress === "Fetching location...")
-      return toast.error("Location not ready yet.");
+    if (!capturedImage) {
+      toast.error("Please capture a photo first.");
+      return;
+    }
+
+    if (!locationAddress || locationAddress === "Fetching location...") {
+      toast.error("Location not ready yet.");
+      return;
+    }
 
     if (formData.Type === "Site Visit" && !siteCapturedImage) {
-      return toast.error("Please capture Site Visit photo.");
+      toast.error("Please capture Site Visit photo.");
+      return;
     }
 
     setLoading(true);
@@ -251,9 +249,7 @@ useEffect(() => {
                 </span>
               </p>
 
-              {lastTime && (
-                <p className="text-gray-500 mt-1">Last activity: {lastTime}</p>
-              )}
+              {lastTime && <p className="text-gray-500 mt-1">Last activity: {lastTime}</p>}
 
               <p className="mt-1 text-blue-600 font-semibold">
                 Total logins today: {loginCountToday}
@@ -267,10 +263,7 @@ useEffect(() => {
             <>
               <div className="grid gap-2">
                 <Label>Status</Label>
-                <Select
-                  value={formData.Status}
-                  onValueChange={(v) => onChangeAction("Status", v)}
-                >
+                <Select value={formData.Status} onValueChange={(v) => onChangeAction("Status", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
@@ -287,10 +280,7 @@ useEffect(() => {
 
               <div className="grid gap-2">
                 <Label>Type</Label>
-                <Select
-                  value={formData.Type}
-                  onValueChange={(v) => onChangeAction("Type", v)}
-                >
+                <Select value={formData.Type} onValueChange={(v) => onChangeAction("Type", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -304,9 +294,7 @@ useEffect(() => {
               {formData.Type === "Site Visit" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Photo</Label>
-                  <Camera
-                    onCaptureAction={(img) => setSiteCapturedImage(img)}
-                  />
+                  <Camera onCaptureAction={(img) => setSiteCapturedImage(img)} />
                 </div>
               )}
 
@@ -314,9 +302,7 @@ useEffect(() => {
                 <Label>Remarks</Label>
                 <Textarea
                   value={formData.Remarks}
-                  onChange={(e) =>
-                    onChangeAction("Remarks", e.target.value)
-                  }
+                  onChange={(e) => onChangeAction("Remarks", e.target.value)}
                 />
               </div>
 
@@ -326,21 +312,21 @@ useEffect(() => {
                 <AlertDescription>{locationAddress}</AlertDescription>
               </Alert>
 
-                {formData.Type === "Site Visit" && (
-                  <div className="mt-2">
-                    <ManualLocationPicker
-                      latitude={manualLat ?? latitude}
-                      longitude={manualLng ?? longitude}
-                      onChange={(lat, lng, address) => {
-                        setManualLat(lat);
-                        setManualLng(lng);
-                        if (address) {
-                          setLocationAddress(address);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+              {formData.Type === "Site Visit" && (
+                <div className="mt-2">
+                  <ManualLocationPicker
+                    latitude={manualLat ?? latitude}
+                    longitude={manualLng ?? longitude}
+                    onChange={(lat, lng, address) => {
+                      setManualLat(lat);
+                      setManualLng(lng);
+                      if (address) {
+                        setLocationAddress(address);
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
               <Button
                 onClick={handleCreate}

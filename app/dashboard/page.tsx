@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import ActivityDialog from "@/components/dashboard-dialog";
 import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
-
+import CreateSalesAttendance from "@/components/CreateSalesAttenance";
 
 // ---------------- Interfaces ----------------
 interface ActivityLog {
@@ -441,7 +441,21 @@ export default function Page() {
                 setFormAction={setFormData}
               />
 
-              
+              {/* Create TSA Attendance Dialog */}
+              <CreateSalesAttendance
+                open={createSalesAttendanceOpen}
+                onOpenChangeAction={setCreateSalesAttendanceOpen}
+                formData={formData}
+                onChangeAction={onChangeAction}
+                userDetails={{
+                  ReferenceID: userDetails?.ReferenceID ?? "",
+                  Email: userDetails?.Email ?? "",
+                  TSM: userDetails?.TSM ?? ""
+                }}
+                fetchAccountAction={fetchAccountAction}
+                setFormAction={setFormData}
+              />
+
               {/* Activity Dialog */}
               <ActivityDialog
                 open={dialogOpen}
