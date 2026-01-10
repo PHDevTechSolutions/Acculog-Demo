@@ -76,7 +76,7 @@ export function LoginForm({
                   type="email"
                   value={Email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="m@example.com"
+                  placeholder="acculog.com"
                   required
                 />
               </Field>
