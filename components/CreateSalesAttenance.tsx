@@ -233,9 +233,9 @@ export default function CreateAttendance({
     if (!locationAddress || locationAddress === "Fetching location...")
       return toast.error("Location not ready yet.");
 
-    if (formData.Type === "Site Visit" && !siteCapturedImage) {
-      return toast.error("Please capture Site Visit photo.");
-    }
+    if (formData.Type === "Site Visit" && formData.Status !== "Logout" && !siteCapturedImage) {
+  return toast.error("Please capture Site Visit photo.");
+}
 
     setLoading(true);
     try {
@@ -359,7 +359,7 @@ export default function CreateAttendance({
                 </Select>
               </div>
 
-              {formData.Type === "Site Visit" && (
+              {formData.Type === "Site Visit" && formData.Status !== "Logout" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Account</Label>
                   {loadingAccounts ? (
@@ -381,10 +381,7 @@ export default function CreateAttendance({
                           </SelectItem>
                         )}
                         {siteVisitAccounts.map((acc) => (
-                          <SelectItem
-                            key={acc.company_name}
-                            value={acc.company_name}
-                          >
+                          <SelectItem key={acc.company_name} value={acc.company_name}>
                             {acc.company_name}
                           </SelectItem>
                         ))}
@@ -394,12 +391,10 @@ export default function CreateAttendance({
                 </div>
               )}
 
-              {formData.Type === "Site Visit" && (
+              {formData.Type === "Site Visit" && formData.Status !== "Logout" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Photo</Label>
-                  <Camera
-                    onCaptureAction={(img) => setSiteCapturedImage(img)}
-                  />
+                  <Camera onCaptureAction={(img) => setSiteCapturedImage(img)} />
                 </div>
               )}
 

@@ -13,6 +13,7 @@ interface ActivityLog {
   Location: string;
   date_created: string;
   Remarks: string;
+  SiteVisitAccount: string | null;
   _id?: string;
 }
 
@@ -43,6 +44,9 @@ export default function ActivityDialog({
           <div className="text-xs text-left text-muted-foreground mt-2">
             {selectedEvent ? (
               <>
+                <p>
+                  <strong>Visited On:</strong> {selectedEvent.SiteVisitAccount}
+                </p>
                 <p>
                   <strong>User:</strong>{" "}
                   {usersMap[selectedEvent.ReferenceID]

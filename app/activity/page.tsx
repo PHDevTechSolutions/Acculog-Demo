@@ -312,66 +312,6 @@ export default function Page() {
         return parts.length > 0 ? parts.join(" ") : "0s";
     };
 
-    // Compute Late / OT remarks
-    const computeTimeRemarks = (log: ActivityLog): { text: string; variant: "secondary" | "destructive" | "outline" } => {
-        const logDate = new Date(log.date_created);
-
-        const workStart = new Date(log.date_created);
-        workStart.setHours(8, 0, 0, 0);
-
-        const morningEnd = new Date(log.date_created);
-        morningEnd.setHours(12, 59, 59, 999);
-
-        const afternoonStart = new Date(log.date_created);
-        afternoonStart.setHours(13, 0, 0, 0);
-
-        const workEnd = new Date(log.date_created);
-        workEnd.setHours(17, 0, 0, 0);
-
-        const undertimeStart = new Date(log.date_created);
-        undertimeStart.setHours(13, 0, 0, 0);
-
-        const undertimeEnd = new Date(log.date_created);
-        undertimeEnd.setHours(16, 59, 59, 999);
-
-        if (log.Status.toLowerCase() === "login") {
-            if (logDate > workStart && logDate <= morningEnd) {
-                const lateMs = logDate.getTime() - workStart.getTime();
-                return { text: `Late by ${formatDuration(lateMs)}`, variant: "destructive" };
-            }
-
-            if (logDate >= afternoonStart) {
-                return { text: "Halfday", variant: "destructive" };
-            }
-
-            return { text: "On Time", variant: "secondary" };
-        }
-
-        if (log.Status.toLowerCase() === "logout") {
-            if (logDate >= undertimeStart && logDate <= undertimeEnd) {
-                const undertimeMs = workEnd.getTime() - logDate.getTime();
-                return { text: `Undertime by ${formatDuration(undertimeMs)}`, variant: "destructive" };
-            }
-
-            if (logDate > workEnd) {
-                const overtimeMs = logDate.getTime() - workEnd.getTime();
-                return { text: `OT +${formatDuration(overtimeMs)}`, variant: "outline" };
-            }
-
-            if (logDate.getTime() === workEnd.getTime()) {
-                return { text: "On Time", variant: "secondary" };
-            }
-
-            if (logDate < undertimeStart) {
-                return { text: "On Time", variant: "secondary" };
-            }
-
-            return { text: "On Time", variant: "secondary" };
-        }
-
-        return { text: "-", variant: "destructive" };
-    };
-
     // Simulate loading while typing with debounce
     useEffect(() => {
         if (searchQuery === "") {
