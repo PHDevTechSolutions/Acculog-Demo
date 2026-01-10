@@ -1,20 +1,14 @@
-self.addEventListener("install", (event) => {
-  console.log("📦 Service Worker installed");
-  event.waitUntil(
-    caches.open("acculog-cache").then((cache) => {
-      return cache.addAll(["/"]);
-    })
-  );
-});
+const CACHE_NAME = "acculog-cache-v1";
+const urlsToCache = ["/", "/manifest.json", "/fluxx.png"];
 
-self.addEventListener("activate", (event) => {
-  console.log("🚀 Service Worker activated");
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
 });
 
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request).then((response) => response || fetch(event.request))
   );
 });

@@ -15,8 +15,8 @@ export default function InstallPrompt() {
 
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
+      console.log("📌 beforeinstallprompt event fired");
       setDeferredPrompt(e);
-      console.log("📌 beforeinstallprompt fired");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -27,12 +27,19 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      console.log("User choice:", choiceResult);
-      setDeferredPrompt(null);
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+
+    const choiceResult = await deferredPrompt.userChoice;
+    console.log("User choice:", choiceResult);
+
+    if (choiceResult.outcome === "accepted") {
+      console.log("User accepted the install prompt");
+    } else {
+      console.log("User dismissed the install prompt");
     }
+
+    setDeferredPrompt(null);
   };
 
   if (!deferredPrompt) return null;
