@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Created in NextJs Developed By Fluxx Tech Solutions",
   icons: {
     icon: "/fluxx.png",
+    shortcut: "/fluxx.png",
+    apple: "/fluxx.png",
   },
   manifest: "/manifest.json",
 };
