@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import Camera from "./camera";
 import {
@@ -39,6 +39,7 @@ interface FormData {
   Status: string;
   PhotoURL: string;
   Remarks: string;
+  SiteVisitAccount?: string;
   _id?: string;
 }
 
@@ -82,7 +83,59 @@ export default function CreateAttendance({
 
   const [loginCountToday, setLoginCountToday] = useState(0);
 
+  const [siteVisitAccounts, setSiteVisitAccounts] = useState<
+    { company_name: string }[]
+  >([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
 
+  // Ref para i-track previous formData.Type para maiwasan infinite loop
+  const prevTypeRef = useRef<string | null>(null);
+
+  // Fetch accounts kapag Site Visit ang type
+  useEffect(() => {
+    if (!open) return;
+
+    if (formData.Type === "Site Visit") {
+      setLoadingAccounts(true);
+      setAccountsError(null);
+
+      fetch(`/api/fetch-account?referenceid=${encodeURIComponent(userDetails.ReferenceID)}`, {
+        cache: "no-store",
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch accounts");
+          return res.json();
+        })
+        .then((json) => {
+          if (json.success) {
+            setSiteVisitAccounts(json.data || []);
+          } else {
+            setSiteVisitAccounts([]);
+            setAccountsError(json.error || "No accounts found");
+          }
+        })
+        .catch((err) => {
+          setSiteVisitAccounts([]);
+          setAccountsError(err.message || "Error fetching accounts");
+        })
+        .finally(() => {
+          setLoadingAccounts(false);
+        });
+    } else {
+      setSiteVisitAccounts([]);
+
+      // Reset SiteVisitAccount ONLY if previous type was Site Visit para hindi mag cause ng infinite loop
+      if (prevTypeRef.current === "Site Visit") {
+        onChangeAction("SiteVisitAccount", "");
+      }
+    }
+
+    prevTypeRef.current = formData.Type;
+
+  }, [formData.Type, open, userDetails.ReferenceID]); // wala na si onChangeAction sa deps
+
+  // Geolocation effect
   useEffect(() => {
     setManualLat(null);
     setManualLng(null);
@@ -118,6 +171,7 @@ export default function CreateAttendance({
     };
   }, [open]);
 
+  // Upload image helper
   const uploadToCloudinary = async (base64: string): Promise<string> => {
     const imgData = new FormData();
     imgData.append("file", base64);
@@ -135,6 +189,7 @@ export default function CreateAttendance({
     return data.secure_url;
   };
 
+  // Fetch last login/logout status
   useEffect(() => {
     if (!open) return;
 
@@ -161,13 +216,14 @@ export default function CreateAttendance({
       }
     };
 
-    fetchSummary(); // initial load
+    fetchSummary();
 
-    interval = setInterval(fetchSummary, 3000); // ⏱ every 3 seconds
+    interval = setInterval(fetchSummary, 3000);
 
     return () => clearInterval(interval);
   }, [userDetails.ReferenceID, open]);
 
+  // Handle create attendance submit
   const handleCreate = async () => {
     if (!formData.Status) {
       return toast.error("Please select Login or Logout.");
@@ -219,6 +275,7 @@ export default function CreateAttendance({
         PhotoURL: "",
         Remarks: "",
         TSM: userDetails.TSM,
+        SiteVisitAccount: "",
       });
 
       setCapturedImage(null);
@@ -301,6 +358,41 @@ export default function CreateAttendance({
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.Type === "Site Visit" && (
+                <div className="grid gap-2">
+                  <Label>Site Visit Account</Label>
+                  {loadingAccounts ? (
+                    <p className="text-xs text-gray-500">Loading accounts...</p>
+                  ) : accountsError ? (
+                    <p className="text-xs text-red-500">{accountsError}</p>
+                  ) : (
+                    <Select
+                      value={formData.SiteVisitAccount || ""}
+                      onValueChange={(v) => onChangeAction("SiteVisitAccount", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {siteVisitAccounts.length === 0 && (
+                          <SelectItem value="" disabled>
+                            No accounts available
+                          </SelectItem>
+                        )}
+                        {siteVisitAccounts.map((acc) => (
+                          <SelectItem
+                            key={acc.company_name}
+                            value={acc.company_name}
+                          >
+                            {acc.company_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
 
               {formData.Type === "Site Visit" && (
                 <div className="grid gap-2">

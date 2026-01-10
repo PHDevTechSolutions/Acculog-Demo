@@ -22,6 +22,7 @@ export default async function addActivityLog(
       Longitude,
       PhotoURL,
       SitePhotoURL, // ✅ still allowed
+      SiteVisitAccount,
       Remarks,
       TSM,
     } = req.body;
@@ -92,6 +93,7 @@ export default async function addActivityLog(
       Status,
       Remarks,
       TSM,
+      SiteVisitAccount,
       date_created: new Date(),
     };
 
