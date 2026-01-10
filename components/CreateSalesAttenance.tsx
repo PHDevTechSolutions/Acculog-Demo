@@ -234,8 +234,8 @@ export default function CreateAttendance({
       return toast.error("Location not ready yet.");
 
     if (formData.Type === "Site Visit" && formData.Status !== "Logout" && !siteCapturedImage) {
-  return toast.error("Please capture Site Visit photo.");
-}
+      return toast.error("Please capture Site Visit photo.");
+    }
 
     setLoading(true);
     try {
@@ -261,7 +261,12 @@ export default function CreateAttendance({
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        // Basahin ang error message mula sa response body
+        const errorData = await response.json();
+        // Ipakita yung specific error message sa toast
+        return toast.error(errorData.error || "Error saving attendance.");
+      }
 
       toast.success("Attendance created!");
       fetchAccountAction();
@@ -280,10 +285,13 @@ export default function CreateAttendance({
 
       setCapturedImage(null);
       setSiteCapturedImage(null);
-    } catch {
+    } catch (error) {
+      // Optional: pwede mo i-log dito para makita ang ibang unexpected error
+      console.error("Unexpected error:", error);
       toast.error("Error saving attendance.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

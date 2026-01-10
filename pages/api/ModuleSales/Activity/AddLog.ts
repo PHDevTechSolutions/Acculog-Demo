@@ -1,4 +1,3 @@
-// /pages/api/ModuleSales/Activity/AddLog.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { connectToDatabase } from "@/lib/MongoDB";
 
@@ -21,7 +20,7 @@ export default async function addActivityLog(
       Latitude,
       Longitude,
       PhotoURL,
-      SitePhotoURL, // ✅ still allowed
+      SitePhotoURL,
       SiteVisitAccount,
       Remarks,
       TSM,
@@ -48,7 +47,7 @@ export default async function addActivityLog(
     endOfDay.setDate(endOfDay.getDate() + 1);
     endOfDay.setMilliseconds(-1);
 
-    /* 🔍 LAST ACTIVITY (UNCHANGED) */
+    /* 🔍 LAST ACTIVITY */
     const lastActivityToday = await activityLogsCollection.findOne(
       {
         ReferenceID,
@@ -67,7 +66,25 @@ export default async function addActivityLog(
       });
     }
 
-    /* 🚫 SITE VISIT LIMIT (COUNT ONLY, NO SITE ACTION) */
+    /* 🚫 LOGIN LIMIT: MAX 10 LOGINS PER DAY */
+    if (Status === "Login") {
+      const loginCount = await activityLogsCollection.countDocuments({
+        ReferenceID,
+        Status: "Login",
+        date_created: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      });
+
+      if (loginCount >= 10) {
+        return res.status(403).json({
+          error: "Daily 10 Login limit reached. Resets at 8:00 AM.",
+        });
+      }
+    }
+
+    /* 🚫 SITE VISIT LIMIT */
     if (Type === "Site Visit") {
       const siteVisitCount = await activityLogsCollection.countDocuments({
         ReferenceID,
@@ -78,9 +95,9 @@ export default async function addActivityLog(
         },
       });
 
-      if (siteVisitCount >= 4) {
+      if (siteVisitCount >= 10) {
         return res.status(403).json({
-          error: "Daily Site Visit limit reached. Resets at 8:00 AM.",
+          error: "Daily 10 Site Visit limit reached. Resets at 8:00 AM.",
         });
       }
     }

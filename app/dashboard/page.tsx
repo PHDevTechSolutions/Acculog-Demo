@@ -44,6 +44,7 @@ interface ActivityLog {
   Location: string;
   date_created: string;
   PhotoURL?: string;
+  
   Remarks: string;
   TSM: string;
   SiteVisitAccount: string;
@@ -78,6 +79,7 @@ interface FormData {
   PhotoURL: string;
   Remarks: string;
   TSM: string;
+  SitePhotoURL?: string;
   SiteVisitAccount?: string;
   _id?: string;
 }
