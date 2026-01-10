@@ -32,6 +32,7 @@ interface ActivityLog {
   PhotoURL?: string;
   Remarks: string;
   TSM: string;
+  SiteVisitAccount: string;
   _id?: string;
 }
 
