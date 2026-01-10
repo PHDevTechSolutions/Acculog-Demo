@@ -63,6 +63,7 @@ interface FormData {
   PhotoURL: string;
   Remarks: string;
   TSM: string;
+  SiteVisitAccount?: string;
   _id?: string;
 }
 
