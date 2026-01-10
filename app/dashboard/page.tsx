@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { FormatProvider } from "@/contexts/FormatContext";
@@ -20,8 +20,22 @@ import ActivityDialog from "@/components/dashboard-dialog";
 import CreateAttendance from "@/components/CreateAttendance";
 import { type DateRange } from "react-day-picker";
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
+import { MapPin, X } from "lucide-react";
+import { motion, useInView } from "framer-motion";
 
 // ---------------- Interfaces ----------------
+type TimelineItem = {
+  id: string;
+  title?: string | null;
+  description: string;
+  location: string;
+  date?: string;
+};
+
+type InteractiveTimelineProps = {
+  items?: TimelineItem[];
+};
+
 interface ActivityLog {
   ReferenceID: string;
   Email: string;
@@ -104,6 +118,98 @@ function isSameDay(d1: Date, d2: Date) {
   );
 }
 
+// ---------------- Timeline Components ----------------
+
+function TimelineItemComponent({
+  item,
+  index,
+}: {
+  item: TimelineItem;
+  index: number;
+}) {
+  const itemRef = useRef(null);
+  const itemInView = useInView(itemRef, {
+    once: true,
+    margin: "-100px",
+  });
+
+  return (
+    <div ref={itemRef} className="relative flex gap-6">
+      {/* Timeline dot */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={
+          itemInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }
+        }
+        transition={{ delay: index * 0.2, duration: 0.3 }}
+        className="absolute left-4 top-2 h-4 w-4 rounded-full border-2 border-primary bg-primary"
+      />
+
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={itemInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+        transition={{
+          delay: index * 0.2 + 0.3,
+          type: "spring",
+          stiffness: 300,
+          damping: 25,
+        }}
+        className="ml-12 flex-1 rounded-lg border border-border bg-card p-4"
+      >
+        {item.date && (
+          <span className="text-xs text-muted-foreground">{item.date}</span>
+        )}
+
+        {item.title && item.title.trim() !== "" && item.title !== "Unknown Client" ? (
+          <h3 className="mt-1 text-sm font-semibold">Visited On: {item.title}</h3>
+        ) : null}
+
+        <h3 className="mt-1 text-xs font-semibold">Address: {item.location}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Remarks / Feedback: {item.description}
+        </p>
+      </motion.div>
+    </div>
+  );
+
+}
+
+function InteractiveTimeline({
+  items = [
+    { id: "1", title: "Started", description: "Project began", location: "", date: "2024" },
+    {
+      id: "2",
+      title: "Development",
+      description: "Active development phase",
+      location: "",
+      date: "2024",
+    },
+    { id: "3", title: "Launch", description: "Project launched", location: "", date: "2024" },
+  ],
+}: InteractiveTimelineProps) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  return (
+    <div ref={ref} className="relative w-full max-w-2xl">
+      {/* Timeline line */}
+      <motion.div
+        initial={{ scaleY: 0 }}
+        animate={isInView ? { scaleY: 1 } : { scaleY: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="absolute left-6 top-0 h-full w-0.5 origin-top bg-border"
+      />
+
+      <div className="space-y-8 text-xs">
+        {items.map((item, index) => (
+          <TimelineItemComponent key={item.id} item={item} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ---------------- Page Component ----------------
 export default function Page() {
   const searchParams = useSearchParams();
@@ -130,6 +236,8 @@ export default function Page() {
     Remarks: "",
     TSM: "",
   });
+
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -320,6 +428,22 @@ export default function Page() {
     setDialogOpen(true);
   };
 
+  const todayLogins = useMemo(() => {
+    return allVisibleAccounts.filter(
+      (post) =>
+        post.Status.toLowerCase() === "login" && isSameDay(new Date(post.date_created), new Date())
+    );
+  }, [allVisibleAccounts]);
+
+  // Prepare timeline items from todayLogins
+  const timelineItems: TimelineItem[] = todayLogins.map((post) => ({
+    id: post._id ?? post.date_created,
+    title: post.SiteVisitAccount || "Unknown Client",
+    description: post.Remarks || "No remarks",
+    location: post.Location || "",
+    date: new Date(post.date_created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  }));
+
   // ---------------- Render ----------------
   return (
     <UserProvider>
@@ -429,6 +553,40 @@ export default function Page() {
                     );
                   })}
                 </div>
+              )}
+
+              {/* Floating panel for today's Site Visits */}
+              {isPanelOpen ? (
+                <div
+                  className="fixed bottom-4 right-4 max-w-sm w-96 max-h-96 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 flex flex-col"
+                  aria-label="Today's Client Visits"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold text-lg">Today's Visits</h3>
+                    <button
+                      onClick={() => setIsPanelOpen(false)}
+                      aria-label="Close panel"
+                      className="p-1 rounded hover:bg-gray-200"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {timelineItems.length === 0 ? (
+                    <p className="text-xs text-gray-500">No login status today.</p>
+                  ) : (
+                    <InteractiveTimeline items={timelineItems} />
+                  )}
+                </div>
+              ) : (
+                // Floating Map Icon button when panel closed
+                <button
+                  onClick={() => setIsPanelOpen(true)}
+                  aria-label="Open login status panel"
+                  className="fixed bottom-4 right-4 z-50 rounded-full bg-white p-3 shadow-lg border border-gray-300 hover:bg-gray-100"
+                >
+                  <MapPin size={28} />
+                </button>
               )}
 
               {/* Create Attendance Dialog */}
