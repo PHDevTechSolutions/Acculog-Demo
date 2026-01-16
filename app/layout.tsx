@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased relative`}>
+      <body className={`${inter.variable} font-mono antialiased relative`}>
         <UserProvider>
           <ServiceWorkerRegister />
           {children}

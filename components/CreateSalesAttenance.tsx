@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CheckCircleIcon } from "lucide-react";
 
 const ManualLocationPicker = dynamic(
   () => import("./manual-location-picker"),
@@ -353,6 +354,10 @@ export default function CreateAttendance({
 
               <div className="grid gap-2">
                 <Label>Type</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select the type of activity you are performing.
+                </p>
+
                 <Select
                   value={formData.Type}
                   onValueChange={(v) => onChangeAction("Type", v)}
@@ -361,15 +366,22 @@ export default function CreateAttendance({
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Client Visit">On Field</SelectItem>
-                    <SelectItem value="Site Visit">Site Visit</SelectItem>
+                    <SelectItem value="Client Visit">
+                      On Field
+                    </SelectItem>
+                    <SelectItem value="Site Visit">
+                      Site Visit
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.Type === "Site Visit" && formData.Status !== "Logout" && (
+              {formData.Type === "Site Visit" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Account</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Select the account or company you are visiting for this site visit.
+                  </p>
                   {loadingAccounts ? (
                     <p className="text-xs text-gray-500">Loading accounts...</p>
                   ) : accountsError ? (
@@ -399,7 +411,7 @@ export default function CreateAttendance({
                 </div>
               )}
 
-              {formData.Type === "Site Visit" && formData.Status !== "Logout" && (
+              {formData.Type === "Site Visit" && (
                 <div className="grid gap-2">
                   <Label>Site Visit Photo</Label>
                   <Camera onCaptureAction={(img) => setSiteCapturedImage(img)} />
@@ -410,6 +422,7 @@ export default function CreateAttendance({
                 <Label>Remarks</Label>
                 <Textarea
                   value={formData.Remarks}
+                  placeholder="Feedback / Remarks"
                   onChange={(e) =>
                     onChangeAction("Remarks", e.target.value)
                   }
@@ -439,6 +452,7 @@ export default function CreateAttendance({
               )}
 
               <Button
+                className="p-10 bg-green-600 text-lg"
                 onClick={handleCreate}
                 disabled={
                   loading ||
@@ -447,6 +461,7 @@ export default function CreateAttendance({
                   locationAddress === "Fetching location..."
                 }
               >
+                <CheckCircleIcon />
                 {loading ? "Saving..." : "Create Attendance"}
               </Button>
             </>

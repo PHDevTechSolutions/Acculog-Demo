@@ -122,9 +122,9 @@ export default function Camera({ onCaptureAction }: CameraProps) {
   };
 
   return (
-    <div className="w-full flex flex-col items-center gap-3">
+    <div className="w-full flex flex-col gap-3 border border-dashed border-gray-300 p-3 rounded-lg shadow-lg">
       {!permissionGranted && (
-        <Button onClick={requestCameraPermission} className="mb-4 h-20">
+        <Button onClick={requestCameraPermission} className="h-20">
           <CameraIcon />
           Start Camera
         </Button>
