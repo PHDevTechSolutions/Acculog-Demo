@@ -3,8 +3,8 @@ import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
-import InstallPrompt from "./install-prompt";
-import ServiceWorkerRegister from "./service-worker-register";
+import InstallPrompt from "@/components/install-prompt";
+import ServiceWorkerRegister from "@/components/service-worker-register";
 
 const inter = Inter({
   weight: "100",
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Acculog - Attendance & Time Tracking System",
   description: "Created in NextJs Developed By Fluxx Tech Solutions",
   icons: {
-    icon: "/fluxx.png",
-    shortcut: "/fluxx.png",
-    apple: "/fluxx.png",
+    icon: "/Fluxx.png",
+    shortcut: "/Fluxx.png",
+    apple: "/Fluxx.png",
   },
   manifest: "/manifest.json",
 };
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ServiceWorkerRegister />
           {children}
           <Toaster />
-          <div className="fixed inset-0 z-[9999] pointer-events-none">
+          <div className="fixed inset-0 z-[500] pointer-events-none">
             <div className="pointer-events-auto">
               <InstallPrompt />
             </div>
