@@ -1,48 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
+    const handler = (e: any) => {
       e.preventDefault();
-      console.log("📌 beforeinstallprompt event fired");
       setDeferredPrompt(e);
+      setVisible(true);
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handler);
 
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-
-    const choiceResult = await deferredPrompt.userChoice;
-    console.log("User choice:", choiceResult);
-
-    if (choiceResult.outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    } else {
-      console.log("User dismissed the install prompt");
-    }
-
-    setDeferredPrompt(null);
+    deferredPrompt.userChoice.then(() => {
+      setDeferredPrompt(null);
+      setVisible(false);
+    });
   };
 
-  if (!deferredPrompt) return null;
+  if (!visible) return null;
 
   return (
-    <button
-      onClick={handleInstallClick}
-      className="fixed bottom-4 right-4 bg-cyan-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-cyan-700 pointer-events-auto"
-    >
-      📲 Install App
-    </button>
+    <div className="fixed bottom-4 right-4 bg-white p-4 rounded shadow-md">
+      <button
+        onClick={handleInstallClick}
+        className="px-4 py-2 bg-teal-600 text-white rounded"
+      >
+        Install App
+      </button>
+      <button onClick={() => setVisible(false)} className="ml-2 text-gray-600">
+        Cancel
+      </button>
+    </div>
   );
 }
