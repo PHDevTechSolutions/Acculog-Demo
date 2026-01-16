@@ -22,6 +22,7 @@ import { type DateRange } from "react-day-picker";
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
 import { MapPin, X } from "lucide-react";
 import { motion, useInView } from "framer-motion";
+import { CalendarCheckIcon, MapPinCheck } from "lucide-react";
 
 // ---------------- Interfaces ----------------
 type TimelineItem = {
@@ -29,6 +30,7 @@ type TimelineItem = {
   title?: string | null;
   description: string;
   location: string;
+  status: string;
   date?: string;
 };
 
@@ -44,7 +46,7 @@ interface ActivityLog {
   Location: string;
   date_created: string;
   PhotoURL?: string;
-  
+
   Remarks: string;
   TSM: string;
   SiteVisitAccount: string;
@@ -140,12 +142,10 @@ function TimelineItemComponent({
       {/* Timeline dot */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
-        animate={
-          itemInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }
-        }
+        animate={itemInView ? { scale: 1, opacity: 1 } : undefined}
         transition={{ delay: index * 0.2, duration: 0.3 }}
-        className="absolute left-4 top-2 h-4 w-4 rounded-full border-2 border-primary bg-primary"
-      />
+        className="absolute left-4 top-2 h-4 w-4"
+      ><MapPinCheck /></motion.div>
 
       {/* Content */}
       <motion.div
@@ -160,7 +160,7 @@ function TimelineItemComponent({
         className="ml-12 flex-1 rounded-lg border border-border bg-card p-4"
       >
         {item.date && (
-          <span className="text-xs text-muted-foreground">{item.date}</span>
+          <span className="text-xs text-muted-foreground">{item.date} - {item.status}</span>
         )}
 
         {item.title && item.title.trim() !== "" && item.title !== "Unknown Client" ? (
@@ -179,15 +179,16 @@ function TimelineItemComponent({
 
 function InteractiveTimeline({
   items = [
-    { id: "1", title: "Started", description: "Project began", location: "", date: "2024" },
+    { id: "1", title: "Started", description: "Project began", location: "", status: "", date: "2024" },
     {
       id: "2",
       title: "Development",
       description: "Active development phase",
       location: "",
+      status: "",
       date: "2024",
     },
-    { id: "3", title: "Launch", description: "Project launched", location: "", date: "2024" },
+    { id: "3", title: "Launch", description: "Project launched", location: "", status: "", date: "2024" },
   ],
 }: InteractiveTimelineProps) {
   const ref = useRef(null);
@@ -200,7 +201,7 @@ function InteractiveTimeline({
         initial={{ scaleY: 0 }}
         animate={isInView ? { scaleY: 1 } : { scaleY: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute left-6 top-0 h-full w-0.5 origin-top bg-border"
+        className="absolute left-6 top-0 h-full border-l-2 border-dashed border-border origin-top"
       />
 
       <div className="space-y-8 text-xs">
@@ -430,21 +431,23 @@ export default function Page() {
     setDialogOpen(true);
   };
 
-  const todayLogins = useMemo(() => {
+  const todayVisits = useMemo(() => {
     return allVisibleAccounts.filter(
       (post) =>
-        post.Status.toLowerCase() === "login" && isSameDay(new Date(post.date_created), new Date())
+        (post.Status.toLowerCase() === "login" || post.Status.toLowerCase() === "logout") &&
+        isSameDay(new Date(post.date_created), new Date())
     );
   }, [allVisibleAccounts]);
 
-  // Prepare timeline items from todayLogins
-  const timelineItems: TimelineItem[] = todayLogins.map((post) => ({
+  const timelineItems: TimelineItem[] = todayVisits.map((post) => ({
     id: post._id ?? post.date_created,
     title: post.SiteVisitAccount || "Unknown Client",
     description: post.Remarks || "No remarks",
     location: post.Location || "",
+    status: post.Status || "",
     date: new Date(post.date_created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
   }));
+
 
   // ---------------- Render ----------------
   return (
@@ -492,9 +495,9 @@ export default function Page() {
                   aria-label="Search events"
                 />
                 {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
-                  <Button onClick={() => setCreateSalesAttendanceOpen(true)}>Create Attendance</Button>
+                  <Button onClick={() => setCreateSalesAttendanceOpen(true)}><CalendarCheckIcon />Create Log</Button>
                 ) : (
-                  <Button onClick={() => setCreateAttendanceOpen(true)}>Create Attendance</Button>
+                  <Button onClick={() => setCreateAttendanceOpen(true)}><CalendarCheckIcon />Create Log</Button>
                 )}
               </div>
 
@@ -588,6 +591,11 @@ export default function Page() {
                   className="fixed bottom-4 right-4 z-50 rounded-full bg-white p-3 shadow-lg border border-gray-300 hover:bg-gray-100"
                 >
                   <MapPin size={28} />
+                  {todayVisits.length > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                      {todayVisits.length}
+                    </span>
+                  )}
                 </button>
               )}
 

@@ -8,7 +8,7 @@ import { saveAs } from "file-saver";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { FormatProvider } from "@/contexts/FormatContext";
 import { AppSidebar } from "@/components/app-sidebar";
-
+import { InfoIcon } from "lucide-react";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -22,7 +22,13 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar";
-
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+} from "@/components/ui/dialog";
 import {
     Table,
     TableHeader,
@@ -170,7 +176,13 @@ export default function Page() {
         if (!range) return true;
         const date = new Date(dateStr);
         const from = range.from ? new Date(range.from) : null;
-        const to = range.to ? new Date(range.to) : null;
+
+        let to = range.to ? new Date(range.to) : null;
+        if (to) {
+            // Set 'to' to end of the day to include entire day
+            to = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59, 999);
+        }
+
         if (from && to) return date >= from && date <= to;
         if (from) return date.toDateString() === from.toDateString();
         if (to) return date.toDateString() === to.toDateString();
@@ -402,6 +414,22 @@ export default function Page() {
         saveAs(blob, "timesheet.xlsx");
     }
 
+    const [selectedRef, setSelectedRef] = useState<string | null>(null);
+    function getComputationDetails(ref: string) {
+        const week = weeklyData[ref];
+        if (!week) return null;
+
+        let details = `Computation breakdown for ${ref}:\n\n`;
+        details += `Daily hours:\n`;
+        dayHeaders.forEach(({ dateStr, label }) => {
+            details += `  ${label}: ${week[dateStr]?.toFixed(2) ?? "0.00"} hrs\n`;
+        });
+        details += `\nTotals:\n`;
+        details += `  Late: ${week.late.toFixed(2)} hrs\n`;
+        details += `  Undertime: ${week.undertime.toFixed(2)} hrs\n`;
+        details += `  Overtime: ${week.overtime.toFixed(2)} hrs\n`;
+        return details;
+    }
 
     return (
         <UserProvider>
@@ -513,8 +541,20 @@ export default function Page() {
                                                         className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                                                             } hover:bg-blue-50`}
                                                     >
-                                                        <TableCell className="capitalize px-4 py-2 font-medium max-w-xs truncate" title={name}>
+                                                        <TableCell
+                                                            className="capitalize px-4 py-2 font-medium max-w-xs truncate flex items-center gap-2"
+                                                            title={name}
+                                                        >
                                                             {name}
+                                                            {/* Info button */}
+                                                            <button
+                                                                aria-label={`Show computation details for ${name}`}
+                                                                onClick={() => setSelectedRef(ref)}
+                                                                className="text-blue-500 hover:text-blue-700"
+                                                                type="button"
+                                                            >
+                                                                <InfoIcon className="h-4 w-4" />
+                                                            </button>
                                                         </TableCell>
 
                                                         {dayHeaders.map(({ dateStr }) => (
@@ -567,7 +607,23 @@ export default function Page() {
                                     </TableBody>
                                 </Table>
                             </div>
-
+                            {/* Dialog for computation details */}
+                            {selectedRef && (
+                                <Dialog open={true} onOpenChange={() => setSelectedRef(null)}>
+                                    <DialogContent>
+                                        <DialogTitle>Computation Details</DialogTitle>
+                                        <pre className="whitespace-pre-wrap text-sm mt-2">
+                                            {getComputationDetails(selectedRef)}
+                                        </pre>
+                                        <button
+                                            onClick={() => setSelectedRef(null)}
+                                            className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                        >
+                                            Close
+                                        </button>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                         </div>
                     </SidebarInset>
                 </SidebarProvider>
