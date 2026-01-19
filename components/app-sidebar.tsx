@@ -175,29 +175,28 @@ export function AppSidebar({
 
       <SidebarContent>
         {/* DASHBOARD LINK */}
-        <SidebarMenu className="px-2 pt-2">
+        <SidebarMenu>
           {/* EXISTING */}
           <DatePicker
             selectedDateRange={dateCreatedFilterRange}
             onDateSelectAction={handleDateRangeSelect}
           />
           <SidebarSeparator className="my-2" />
-          <SidebarMenuItem>
-            <Link
-              href={`/dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-muted transition"
-            >
-              <LayoutDashboard className="h-5 w-5 text-primary" />
-              Dashboard
-            </Link>
-          </SidebarMenuItem>
+          {allowedPositions.includes(userDetails.Position) && (
+            <SidebarMenuItem>
+              <Link
+                href={`/dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-muted transition"
+              >
+                <LayoutDashboard className="h-5 w-5 text-primary" />
+                Dashboard
+              </Link>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
-
-        <SidebarSeparator className="mx-0" />
 
         <Calendars calendars={calendars} />
       </SidebarContent>
-
 
       <SidebarFooter>
         <SidebarMenu>

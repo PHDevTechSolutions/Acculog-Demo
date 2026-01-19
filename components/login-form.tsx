@@ -41,7 +41,7 @@ export function LoginForm({
           toast.success("Login successful!");
           setTimeout(() => {
             router.push(
-              `/dashboard?id=${encodeURIComponent(result.userId)}`
+              `/activity-planner?id=${encodeURIComponent(result.userId)}`
             );
           }, 800);
         } else {
