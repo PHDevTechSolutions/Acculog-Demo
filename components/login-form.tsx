@@ -88,6 +88,7 @@ export function LoginForm({
                   type="password"
                   value={Password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="****"
                   required
                 />
               </Field>

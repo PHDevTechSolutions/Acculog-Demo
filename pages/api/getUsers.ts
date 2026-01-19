@@ -9,7 +9,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const db = await connectToDatabase();
-    const users = await db.collection("users").find({}, { projection: { Firstname: 1, Lastname: 1, ReferenceID: 1, _id: 0 } }).toArray();
+    const users = await db.collection("users").find({}, 
+      { projection: { 
+        Firstname: 1, 
+        Lastname: 1, 
+        ReferenceID: 1,
+        Status: 1,
+        Company: 1,
+        Department: 1,
+         _id: 0 } }).toArray();
 
     res.status(200).json(users);
   } catch (error) {

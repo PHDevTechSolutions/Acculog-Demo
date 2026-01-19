@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, LayoutDashboard, FileText, Clock, MapPin, Briefcase, Users } from "lucide-react";
+import { Plus, LayoutDashboard, FileText, Clock, MapPin, Briefcase, Users, CalendarCheck } from "lucide-react";
 
 import { Calendars } from "@/components/calendars";
 import { DatePicker } from "@/components/date-picker";
@@ -22,6 +22,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   userId?: string;
@@ -97,9 +98,9 @@ export function AppSidebar({
         name: "Time & Attendance",
         items: [
           {
-            title: "Dashboard",
-            href: `/dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
-            icon: LayoutDashboard,
+            title: "Activity Calendar",
+            href: `/activity-planner${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            icon: CalendarCheck,
           },
           {
             title: "Location",
@@ -173,13 +174,30 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <DatePicker
-          selectedDateRange={dateCreatedFilterRange}
-          onDateSelectAction={handleDateRangeSelect}
-        />
+        {/* DASHBOARD LINK */}
+        <SidebarMenu className="px-2 pt-2">
+          {/* EXISTING */}
+          <DatePicker
+            selectedDateRange={dateCreatedFilterRange}
+            onDateSelectAction={handleDateRangeSelect}
+          />
+          <SidebarSeparator className="my-2" />
+          <SidebarMenuItem>
+            <Link
+              href={`/dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-muted transition"
+            >
+              <LayoutDashboard className="h-5 w-5 text-primary" />
+              Dashboard
+            </Link>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
         <SidebarSeparator className="mx-0" />
+
         <Calendars calendars={calendars} />
       </SidebarContent>
+
 
       <SidebarFooter>
         <SidebarMenu>
