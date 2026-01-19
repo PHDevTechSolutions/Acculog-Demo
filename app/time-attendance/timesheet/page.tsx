@@ -40,7 +40,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { Search } from "lucide-react";
+import { Search, DownloadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import type { DateRange } from "react-day-picker";
 
@@ -471,8 +471,10 @@ export default function Page() {
                                 </div>
 
                                 {/* Export button */}
-                                <Button onClick={exportToExcel}
-                                    disabled={loading}>Export</Button>
+
+                                <Button onClick={exportToExcel} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
+                                    <DownloadCloud size={18} />  Export Data
+                                </Button>
                             </div>
 
 

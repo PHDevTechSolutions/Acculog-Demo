@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, LayoutDashboard, FileText, Clock } from "lucide-react";
+import { Plus, LayoutDashboard, FileText, Clock, MapPin, ClipboardList, Briefcase, Users, UserCheck } from "lucide-react";
 
 import { Calendars } from "@/components/calendars";
 import { DatePicker } from "@/components/date-picker";
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/sidebar";
 
 import { type DateRange } from "react-day-picker";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase"; // make sure path is correct
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   userId?: string;
@@ -37,7 +39,11 @@ export function AppSidebar({
     Lastname: "",
     Email: "",
     profilePicture: "",
+    Position: "",
   });
+
+  const [jobPostingCount, setJobPostingCount] = React.useState(0);
+  const [applicationCount, setApplicationCount] = React.useState(0);
 
   React.useEffect(() => {
     if (!userId) return;
@@ -50,15 +56,45 @@ export function AppSidebar({
           Lastname: data.Lastname || "",
           Email: data.Email || "",
           profilePicture: data.profilePicture || "",
+          Position: data.Position || "",
         })
       )
       .catch((err) => console.error(err));
   }, [userId]);
 
-  const calendars = React.useMemo(
-    () => [
+  const allowedPositions = [
+    "HR Associate",
+    "HR Manager",
+    "HR Supervisor",
+    "Senior Fullstack Developer",
+    "Fullstack Developer",
+  ];
+
+  React.useEffect(() => {
+    if (!userId) return;
+
+    // Query Job Postings count (assuming 'job-postings' is your collection)
+    const jobPostingQ = query(collection(db, "careers"));
+    const unsubscribeJobPostings = onSnapshot(jobPostingQ, (snapshot) => {
+      setJobPostingCount(snapshot.size);
+    });
+
+    // Query Applicant Inquiries count (assuming 'inquiries' with type job)
+    const inquiriesQ = query(collection(db, "inquiries"), where("type", "==", "job"));
+    const unsubscribeInquiries = onSnapshot(inquiriesQ, (snapshot) => {
+      setApplicationCount(snapshot.size);
+    });
+
+    return () => {
+      unsubscribeJobPostings();
+      unsubscribeInquiries();
+    };
+  }, [userId]);
+
+  const calendars = React.useMemo(() => {
+    const baseCalendars = [
       {
-        name: "Menu",
+        name: "Time & Attendance",
         items: [
           {
             title: "Dashboard",
@@ -67,24 +103,46 @@ export function AppSidebar({
           },
           {
             title: "Location",
-            href: `/location${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
-            icon: LayoutDashboard,
+            href: `/time-attendance/location${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            icon: MapPin,
           },
           {
             title: "Activity Logs",
-            href: `/activity${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            href: `/time-attendance/activity${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
             icon: FileText,
           },
           {
             title: "Timesheet",
-            href: `/timesheet${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            href: `/time-attendance/timesheet${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
             icon: Clock,
           },
         ],
       },
-    ],
-    [userId]
-  );
+    ]
+
+    // 👉 HR Associate lang ang makakakita ng Recruitment
+    if (allowedPositions.includes(userDetails.Position)) {
+      const totalCount = jobPostingCount + applicationCount;
+      baseCalendars.push({
+        name: `Recruitment (${totalCount})`,
+        items: [
+          {
+            title: `Job Posting (${jobPostingCount})`,
+            href: `/recruitment/job-posting${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            icon: Briefcase,
+          },
+          {
+            title: `Applicant Inquiries (${applicationCount})`,
+            href: `/recruitment/applicant-inquiries${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+            icon: Users,
+          },
+        ],
+      });
+    }
+
+    return baseCalendars
+  }, [userId, userDetails.Position, jobPostingCount, applicationCount]);
+
 
   function handleDateRangeSelect(range: DateRange | undefined) {
     setDateCreatedFilterRangeAction(range);
@@ -118,7 +176,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
-              
+
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

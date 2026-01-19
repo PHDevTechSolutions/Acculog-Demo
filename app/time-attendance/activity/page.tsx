@@ -14,19 +14,14 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/components/ui/sidebar";
 import { Table, TableCaption, TableHeader, TableRow, TableHead, TableBody, TableCell, } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, PaginationEllipsis, } from "@/components/ui/pagination";
-import {
-    Item,
-    ItemContent,
-    ItemTitle,
-    ItemDescription,
-    ItemActions,
-} from "@/components/ui/item";
+import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions, } from "@/components/ui/item";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner";
-import { Search } from "lucide-react";
+import { Search, DownloadCloud } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from "@/components/ui/dialog";
+
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { type DateRange } from "react-day-picker";
@@ -83,7 +78,6 @@ export default function Page() {
 
     // Expanded rows state
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
 
     // Sync userId from query param to context
     useEffect(() => {
@@ -436,8 +430,8 @@ export default function Page() {
 
                                 {/* Export button aligned right */}
                                 {(userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources") && (
-                                    <Button onClick={handleExport} className="whitespace-nowrap">
-                                        Export Data
+                                    <Button onClick={handleExport} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
+                                        <DownloadCloud size={18} />  Export Data
                                     </Button>
                                 )}
                             </div>
@@ -452,7 +446,7 @@ export default function Page() {
                                         hour: "2-digit",
                                         minute: "2-digit",
                                     });
-                                    
+
                                     return (
                                         <Item
                                             key={post._id || post.ReferenceID}
