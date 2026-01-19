@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, LayoutDashboard, FileText, Clock, MapPin, ClipboardList, Briefcase, Users, UserCheck } from "lucide-react";
+import { Plus, LayoutDashboard, FileText, Clock, MapPin, Briefcase, Users } from "lucide-react";
 
 import { Calendars } from "@/components/calendars";
 import { DatePicker } from "@/components/date-picker";
@@ -12,7 +12,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
@@ -20,7 +19,9 @@ import {
 
 import { type DateRange } from "react-day-picker";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // make sure path is correct
+import { db } from "@/lib/firebase";
+
+import { Button } from "@/components/ui/button";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   userId?: string;
@@ -68,18 +69,17 @@ export function AppSidebar({
     "HR Supervisor",
     "Senior Fullstack Developer",
     "Fullstack Developer",
+    "IT Manager"
   ];
 
   React.useEffect(() => {
     if (!userId) return;
 
-    // Query Job Postings count (assuming 'job-postings' is your collection)
     const jobPostingQ = query(collection(db, "careers"));
     const unsubscribeJobPostings = onSnapshot(jobPostingQ, (snapshot) => {
       setJobPostingCount(snapshot.size);
     });
 
-    // Query Applicant Inquiries count (assuming 'inquiries' with type job)
     const inquiriesQ = query(collection(db, "inquiries"), where("type", "==", "job"));
     const unsubscribeInquiries = onSnapshot(inquiriesQ, (snapshot) => {
       setApplicationCount(snapshot.size);
@@ -118,9 +118,8 @@ export function AppSidebar({
           },
         ],
       },
-    ]
+    ];
 
-    // 👉 HR Associate lang ang makakakita ng Recruitment
     if (allowedPositions.includes(userDetails.Position)) {
       const totalCount = jobPostingCount + applicationCount;
       baseCalendars.push({
@@ -140,12 +139,22 @@ export function AppSidebar({
       });
     }
 
-    return baseCalendars
+    return baseCalendars;
   }, [userId, userDetails.Position, jobPostingCount, applicationCount]);
-
 
   function handleDateRangeSelect(range: DateRange | undefined) {
     setDateCreatedFilterRangeAction(range);
+  }
+
+  // Fixed: handleRaiseTicketClick now constructs URL the same way as calendars' hrefs
+  function handleRaiseTicketClick(userId?: string) {
+    if (!userId) {
+      console.warn("User ID is missing");
+      return;
+    }
+
+    const url = `/ticket${userId ? `?id=${encodeURIComponent(userId)}` : ""}`;
+    window.location.href = url;
   }
 
   return (
@@ -175,9 +184,12 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
-
-            </SidebarMenuButton>
+            <Button
+              onClick={() => handleRaiseTicketClick(userId)}
+              className="flex items-center gap-2 font-bold rounded-lg px-4 py-6"
+            >
+              <Plus size={18} /> Raise a Ticket Concern
+            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

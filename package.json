@@ -39,6 +39,7 @@
     "@react-three/fiber": "^9.1.0",
     "@reactour/tour": "^3.8.0",
     "@stackframe/stack": "^2.7.18",
+    "@supabase/supabase-js": "^2.90.1",
     "@types/mongodb": "^4.0.6",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
