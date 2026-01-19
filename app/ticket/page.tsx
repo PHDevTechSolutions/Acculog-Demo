@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/sidebar";
 
 import { Received } from "@/components/tickets";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { TicketRaiseSuggestion } from "@/components/ticket-raise-suggestion";
 
 interface UserDetails {
   UserId: string;
@@ -153,11 +155,14 @@ export default function Page() {
               {error && <p className="text-red-500">{error}</p>}
 
               {!loadingUser && userDetails && (
-                <Received
-                  referenceid={userDetails.referenceid}
-                  department={userDetails.department}
-                  fullname={`${userDetails.Firstname} ${userDetails.Lastname}`.trim()}
-                />
+                <>
+                  <TicketRaiseSuggestion />
+                  <Received
+                    referenceid={userDetails.referenceid}
+                    department={userDetails.department}
+                    fullname={`${userDetails.Firstname} ${userDetails.Lastname}`.trim()}
+                  />
+                </>
               )}
             </main>
           </SidebarInset>

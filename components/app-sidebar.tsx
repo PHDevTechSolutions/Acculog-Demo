@@ -183,14 +183,15 @@ export function AppSidebar({
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex items-center justify-center">
             <Button
               onClick={() => handleRaiseTicketClick(userId)}
-              className="flex items-center gap-2 font-bold rounded-lg px-4 py-6"
+              className="bg-black text-white py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
             >
-              <Plus size={18} /> Raise a Ticket Concern
+              <Plus size={18} /> Raise a Concern
             </Button>
           </SidebarMenuItem>
+
         </SidebarMenu>
       </SidebarFooter>
 

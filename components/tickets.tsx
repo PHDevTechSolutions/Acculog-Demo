@@ -389,17 +389,17 @@ export const Received: React.FC<RequestProps> = ({
 
                     {/* Right side: buttons grouped */}
                     <div className="flex items-center space-x-2">
-                        <Button variant="outline" onClick={() => setFilterOpen(true)}>
+                        <Button className="bg-black text-white px-8 py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200" onClick={() => setFilterOpen(true)}>
                             Filters
                         </Button>
 
                         {selectedIds.size > 0 && (
-                            <Button variant="destructive" onClick={handleDeleteSelected}>
+                            <Button className="bg-black text-white px-8 py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200" onClick={handleDeleteSelected}>
                                 Delete Selected ({selectedIds.size})
                             </Button>
                         )}
 
-                        <Button
+                        <Button className="bg-black text-white px-8 py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
                             onClick={() => {
                                 resetForm();
                                 setOpen(true);
