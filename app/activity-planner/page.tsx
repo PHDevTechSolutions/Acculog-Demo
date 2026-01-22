@@ -496,7 +496,7 @@ export default function Page() {
                     className="flex-grow rounded border px-3 py-2 text-sm"
                     aria-label="Search events"
                   />
-                  {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
+                  {(userDetails?.Department === "Sales" || userDetails?.Department === "Sales") ? (
                     <Button onClick={() => setCreateSalesAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
 
                   ) : (
