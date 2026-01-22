@@ -25,6 +25,7 @@ import {
 import { Received } from "@/components/tickets";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TicketRaiseSuggestion } from "@/components/ticket-raise-suggestion";
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
 
 interface UserDetails {
   UserId: string;
@@ -125,49 +126,51 @@ export default function Page() {
   }, [queryUserId]);
 
   return (
-    <UserProvider>
-      <FormatProvider>
-        <SidebarProvider>
-          <AppSidebar
-            userId={userId ?? undefined}
-            dateCreatedFilterRange={dateCreatedFilterRange}
-            setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-          />
+    <ProtectedPageWrapper>
+      <UserProvider>
+        <FormatProvider>
+          <SidebarProvider>
+            <AppSidebar
+              userId={userId ?? undefined}
+              dateCreatedFilterRange={dateCreatedFilterRange}
+              setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+            />
 
-          <SidebarInset>
-            <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Tickets</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </header>
+            <SidebarInset>
+              <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4"
+                />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>Tickets</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </header>
 
-            <main className="flex flex-1 flex-col gap-4 p-4 overflow-auto">
-              {loadingUser && <p>Loading user data...</p>}
-              {error && <p className="text-red-500">{error}</p>}
+              <main className="flex flex-1 flex-col gap-4 p-4 overflow-auto">
+                {loadingUser && <p>Loading user data...</p>}
+                {error && <p className="text-red-500">{error}</p>}
 
-              {!loadingUser && userDetails && (
-                <>
-                  <TicketRaiseSuggestion />
-                  <Received
-                    referenceid={userDetails.referenceid}
-                    department={userDetails.department}
-                    fullname={`${userDetails.Firstname} ${userDetails.Lastname}`.trim()}
-                  />
-                </>
-              )}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </FormatProvider>
-    </UserProvider>
+                {!loadingUser && userDetails && (
+                  <>
+                    <TicketRaiseSuggestion />
+                    <Received
+                      referenceid={userDetails.referenceid}
+                      department={userDetails.department}
+                      fullname={`${userDetails.Firstname} ${userDetails.Lastname}`.trim()}
+                    />
+                  </>
+                )}
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        </FormatProvider>
+      </UserProvider>
+    </ProtectedPageWrapper>
   );
 }

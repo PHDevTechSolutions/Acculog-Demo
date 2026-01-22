@@ -26,6 +26,8 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { type DateRange } from "react-day-picker";
 
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
+
 interface ActivityLog {
     ReferenceID: string;
     Email: string;
@@ -383,245 +385,247 @@ export default function Page() {
     }
 
     return (
-        <UserProvider>
-            <FormatProvider>
-                <SidebarProvider>
-                    <AppSidebar
-                        userId={userId ?? undefined}
-                        dateCreatedFilterRange={dateCreatedFilterRange}
-                        setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-                    />
-                    <SidebarInset>
-                        <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                            <SidebarTrigger className="-ml-1" />
-                            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-                            <Breadcrumb>
-                                <BreadcrumbList>
-                                    <BreadcrumbItem>
-                                        <BreadcrumbPage>Activity Logs</BreadcrumbPage>
-                                    </BreadcrumbItem>
-                                </BreadcrumbList>
-                            </Breadcrumb>
-                        </header>
+        <ProtectedPageWrapper>
+            <UserProvider>
+                <FormatProvider>
+                    <SidebarProvider>
+                        <AppSidebar
+                            userId={userId ?? undefined}
+                            dateCreatedFilterRange={dateCreatedFilterRange}
+                            setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+                        />
+                        <SidebarInset>
+                            <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger className="-ml-1" />
+                                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                                <Breadcrumb>
+                                    <BreadcrumbList>
+                                        <BreadcrumbItem>
+                                            <BreadcrumbPage>Activity Logs</BreadcrumbPage>
+                                        </BreadcrumbItem>
+                                    </BreadcrumbList>
+                                </Breadcrumb>
+                            </header>
 
-                        <div className="flex flex-1 flex-col gap-4 p-4">
-                            <div className="flex items-center w-full max-w-md gap-2">
-                                {/* Search input container (relative for icon and spinner) */}
-                                <div className="relative flex-grow">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <Search className="h-5 w-5 text-gray-400" />
+                            <div className="flex flex-1 flex-col gap-4 p-4">
+                                <div className="flex items-center w-full max-w-md gap-2">
+                                    {/* Search input container (relative for icon and spinner) */}
+                                    <div className="relative flex-grow">
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <Search className="h-5 w-5 text-gray-400" />
+                                        </div>
+
+                                        <Input
+                                            id="search"
+                                            type="text"
+                                            placeholder="Search by type, status, email, reference..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-10 pr-10 rounded-md w-full text-xs"
+                                        />
+
+                                        {loading && (
+                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                <Spinner className="h-5 w-5 text-gray-500" />
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <Input
-                                        id="search"
-                                        type="text"
-                                        placeholder="Search by type, status, email, reference..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 pr-10 rounded-md w-full text-xs"
-                                    />
-
-                                    {loading && (
-                                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                                            <Spinner className="h-5 w-5 text-gray-500" />
-                                        </div>
+                                    {/* Export button aligned right */}
+                                    {(userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources") && (
+                                        <Button onClick={handleExport} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
+                                            <DownloadCloud size={18} />  Export Data
+                                        </Button>
                                     )}
                                 </div>
 
-                                {/* Export button aligned right */}
-                                {(userDetails.Role === "Super Admin" || userDetails.Department === "Human Resources") && (
-                                    <Button onClick={handleExport} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
-                                        <DownloadCloud size={18} />  Export Data
-                                    </Button>
-                                )}
-                            </div>
 
+                                <div className="w-full overflow-x-auto">
+                                    {paginatedAccounts.map((post) => {
+                                        const user = usersMap[post.ReferenceID];
+                                        const createdDate = new Date(post.date_created);
+                                        const formattedDate = createdDate.toLocaleDateString();
+                                        const formattedTime = createdDate.toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        });
 
-                            <div className="w-full overflow-x-auto">
-                                {paginatedAccounts.map((post) => {
-                                    const user = usersMap[post.ReferenceID];
-                                    const createdDate = new Date(post.date_created);
-                                    const formattedDate = createdDate.toLocaleDateString();
-                                    const formattedTime = createdDate.toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    });
-
-                                    return (
-                                        <Item
-                                            key={post._id || post.ReferenceID}
-                                            variant="outline"
-                                            className="mb-4"
-                                        >
-                                            <ItemContent>
-                                                <ItemTitle className="flex items-center gap-2">
-                                                    {/* Photo */}
-                                                    {post.PhotoURL ? (
-                                                        <img
-                                                            src={post.PhotoURL}
-                                                            alt="Photo"
-                                                            className="h-20 w-20 rounded-md object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-20 w-20 rounded-md bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                                            N/A
-                                                        </div>
-                                                    )}
-
-                                                    {/* User Name and ReferenceID */}
-                                                    <div>
-                                                        <div className="font-semibold">
-                                                            {user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}
-                                                        </div>
-                                                        <div className="text-[10px] text-gray-500">{post.ReferenceID}</div>
-                                                        <div className="text-[10px] text-gray-500"><strong>Type:</strong> {post.Type}</div>
-                                                        <div className="text-[10px] text-gray-500">
-                                                            <strong>Status:</strong>{" "}
-                                                            <Badge variant="outline" className="text-[8px]" color={statusColor(post.Status)}>
-                                                                {post.Status}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="text-[10px] text-gray-500"><strong>Date:</strong> {formattedDate} {formattedTime}</div>
-                                                        <div className="text-[10px] text-gray-500"><strong>Location:</strong> {post.Location || "N/A"}</div>
-                                                    </div>
-                                                </ItemTitle>
-                                            </ItemContent>
-
-                                            <ItemActions>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        openEditDialog(post);
-                                                    }}
-                                                >
-                                                    Edit
-                                                </Button>
-                                            </ItemActions>
-                                        </Item>
-                                    );
-                                })}
-                            </div>
-                            {/* Pagination */}
-                            {pageCount > 1 && (
-                                <Pagination className="mt-4 flex justify-center">
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    if (currentPage === 1) return;
-                                                    setCurrentPage((p) => Math.max(p - 1, 1));
-                                                }}
-                                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-
-                                        <PaginationItem>
-                                            <PaginationLink
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setCurrentPage(1);
-                                                }}
-                                                aria-current={currentPage === 1 ? "page" : undefined}
-                                                className={currentPage === 1 ? "font-bold underline" : ""}
+                                        return (
+                                            <Item
+                                                key={post._id || post.ReferenceID}
+                                                variant="outline"
+                                                className="mb-4"
                                             >
-                                                1
-                                            </PaginationLink>
-                                        </PaginationItem>
+                                                <ItemContent>
+                                                    <ItemTitle className="flex items-center gap-2">
+                                                        {/* Photo */}
+                                                        {post.PhotoURL ? (
+                                                            <img
+                                                                src={post.PhotoURL}
+                                                                alt="Photo"
+                                                                className="h-20 w-20 rounded-md object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-20 w-20 rounded-md bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                                N/A
+                                                            </div>
+                                                        )}
 
-                                        {currentPage > 3 && (
-                                            <PaginationItem>
-                                                <PaginationEllipsis />
-                                            </PaginationItem>
-                                        )}
+                                                        {/* User Name and ReferenceID */}
+                                                        <div>
+                                                            <div className="font-semibold">
+                                                                {user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}
+                                                            </div>
+                                                            <div className="text-[10px] text-gray-500">{post.ReferenceID}</div>
+                                                            <div className="text-[10px] text-gray-500"><strong>Type:</strong> {post.Type}</div>
+                                                            <div className="text-[10px] text-gray-500">
+                                                                <strong>Status:</strong>{" "}
+                                                                <Badge variant="outline" className="text-[8px]" color={statusColor(post.Status)}>
+                                                                    {post.Status}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="text-[10px] text-gray-500"><strong>Date:</strong> {formattedDate} {formattedTime}</div>
+                                                            <div className="text-[10px] text-gray-500"><strong>Location:</strong> {post.Location || "N/A"}</div>
+                                                        </div>
+                                                    </ItemTitle>
+                                                </ItemContent>
 
-                                        {Array.from(
-                                            { length: Math.min(pageCount - 2, 3) },
-                                            (_, i) => i + Math.max(2, currentPage - 1)
-                                        )
-                                            .filter((page) => page < pageCount)
-                                            .map((page) => (
-                                                <PaginationItem key={page}>
-                                                    <PaginationLink
-                                                        href="#"
+                                                <ItemActions>
+                                                    <Button
+                                                        size="sm"
                                                         onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setCurrentPage(page);
+                                                            e.stopPropagation();
+                                                            openEditDialog(post);
                                                         }}
-                                                        aria-current={currentPage === page ? "page" : undefined}
-                                                        className={currentPage === page ? "font-bold underline" : ""}
                                                     >
-                                                        {page}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            ))}
-
-                                        {currentPage < pageCount - 2 && (
+                                                        Edit
+                                                    </Button>
+                                                </ItemActions>
+                                            </Item>
+                                        );
+                                    })}
+                                </div>
+                                {/* Pagination */}
+                                {pageCount > 1 && (
+                                    <Pagination className="mt-4 flex justify-center">
+                                        <PaginationContent>
                                             <PaginationItem>
-                                                <PaginationEllipsis />
+                                                <PaginationPrevious
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (currentPage === 1) return;
+                                                        setCurrentPage((p) => Math.max(p - 1, 1));
+                                                    }}
+                                                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                                                />
                                             </PaginationItem>
-                                        )}
 
-                                        {pageCount > 1 && (
                                             <PaginationItem>
                                                 <PaginationLink
                                                     href="#"
                                                     onClick={(e) => {
                                                         e.preventDefault();
-                                                        setCurrentPage(pageCount);
+                                                        setCurrentPage(1);
                                                     }}
-                                                    aria-current={currentPage === pageCount ? "page" : undefined}
-                                                    className={currentPage === pageCount ? "font-bold underline" : ""}
+                                                    aria-current={currentPage === 1 ? "page" : undefined}
+                                                    className={currentPage === 1 ? "font-bold underline" : ""}
                                                 >
-                                                    {pageCount}
+                                                    1
                                                 </PaginationLink>
                                             </PaginationItem>
-                                        )}
 
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    if (currentPage === pageCount) return;
-                                                    setCurrentPage((p) => Math.min(p + 1, pageCount));
-                                                }}
-                                                className={currentPage === pageCount ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            )}
+                                            {currentPage > 3 && (
+                                                <PaginationItem>
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            )}
 
-                            {/* Edit Dialog */}
-                            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Edit Remarks</DialogTitle>
-                                    </DialogHeader>
-                                    <textarea
-                                        className="w-full rounded border p-2"
-                                        rows={5}
-                                        value={remarksInput}
-                                        onChange={(e) => setRemarksInput(e.target.value)}
-                                    />
-                                    <DialogFooter className="flex justify-end gap-2">
-                                        <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                                            Cancel
-                                        </Button>
-                                        <Button onClick={saveUpdate} disabled={loading}>
-                                            {loading ? "Saving..." : "Save"}
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
-                    </SidebarInset>
-                </SidebarProvider>
-            </FormatProvider>
-        </UserProvider>
+                                            {Array.from(
+                                                { length: Math.min(pageCount - 2, 3) },
+                                                (_, i) => i + Math.max(2, currentPage - 1)
+                                            )
+                                                .filter((page) => page < pageCount)
+                                                .map((page) => (
+                                                    <PaginationItem key={page}>
+                                                        <PaginationLink
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setCurrentPage(page);
+                                                            }}
+                                                            aria-current={currentPage === page ? "page" : undefined}
+                                                            className={currentPage === page ? "font-bold underline" : ""}
+                                                        >
+                                                            {page}
+                                                        </PaginationLink>
+                                                    </PaginationItem>
+                                                ))}
+
+                                            {currentPage < pageCount - 2 && (
+                                                <PaginationItem>
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            )}
+
+                                            {pageCount > 1 && (
+                                                <PaginationItem>
+                                                    <PaginationLink
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setCurrentPage(pageCount);
+                                                        }}
+                                                        aria-current={currentPage === pageCount ? "page" : undefined}
+                                                        className={currentPage === pageCount ? "font-bold underline" : ""}
+                                                    >
+                                                        {pageCount}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            )}
+
+                                            <PaginationItem>
+                                                <PaginationNext
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (currentPage === pageCount) return;
+                                                        setCurrentPage((p) => Math.min(p + 1, pageCount));
+                                                    }}
+                                                    className={currentPage === pageCount ? "pointer-events-none opacity-50" : ""}
+                                                />
+                                            </PaginationItem>
+                                        </PaginationContent>
+                                    </Pagination>
+                                )}
+
+                                {/* Edit Dialog */}
+                                <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Edit Remarks</DialogTitle>
+                                        </DialogHeader>
+                                        <textarea
+                                            className="w-full rounded border p-2"
+                                            rows={5}
+                                            value={remarksInput}
+                                            onChange={(e) => setRemarksInput(e.target.value)}
+                                        />
+                                        <DialogFooter className="flex justify-end gap-2">
+                                            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button onClick={saveUpdate} disabled={loading}>
+                                                {loading ? "Saving..." : "Save"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        </SidebarInset>
+                    </SidebarProvider>
+                </FormatProvider>
+            </UserProvider>
+        </ProtectedPageWrapper>
     );
 }

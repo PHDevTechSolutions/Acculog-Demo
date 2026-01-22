@@ -44,6 +44,8 @@ import { Search, DownloadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import type { DateRange } from "react-day-picker";
 
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
+
 interface ActivityLog {
     ReferenceID: string;
     Email: string;
@@ -432,204 +434,206 @@ export default function Page() {
     }
 
     return (
-        <UserProvider>
-            <FormatProvider>
-                <SidebarProvider>
-                    <AppSidebar
-                        userId={userId ?? undefined}
-                        dateCreatedFilterRange={dateCreatedFilterRange}
-                        setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-                    />
+        <ProtectedPageWrapper>
+            <UserProvider>
+                <FormatProvider>
+                    <SidebarProvider>
+                        <AppSidebar
+                            userId={userId ?? undefined}
+                            dateCreatedFilterRange={dateCreatedFilterRange}
+                            setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+                        />
 
-                    <SidebarInset>
-                        <header className="bg-background sticky top-0 flex h-16 items-center gap-2 border-b px-4">
-                            <SidebarTrigger className="-ml-1" />
-                            <Separator orientation="vertical" className="mr-2" />
-                            <Breadcrumb>
-                                <BreadcrumbList>
-                                    <BreadcrumbItem>
-                                        <BreadcrumbPage>Timesheet</BreadcrumbPage>
-                                    </BreadcrumbItem>
-                                </BreadcrumbList>
-                            </Breadcrumb>
-                        </header>
+                        <SidebarInset>
+                            <header className="bg-background sticky top-0 flex h-16 items-center gap-2 border-b px-4">
+                                <SidebarTrigger className="-ml-1" />
+                                <Separator orientation="vertical" className="mr-2" />
+                                <Breadcrumb>
+                                    <BreadcrumbList>
+                                        <BreadcrumbItem>
+                                            <BreadcrumbPage>Timesheet</BreadcrumbPage>
+                                        </BreadcrumbItem>
+                                    </BreadcrumbList>
+                                </Breadcrumb>
+                            </header>
 
-                        <div className="flex flex-1 flex-col gap-4 p-4">
-                            <div className="flex items-center w-full max-w-md gap-2">
-                                {/* Search input container */}
-                                <div className="relative flex-grow">
-                                    <Search className="absolute left-2 top-2 h-5 w-5 text-gray-400" />
-                                    <Input
-                                        placeholder="Search by Firstname or Lastname..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                    {loading && (
-                                        <Spinner className="absolute right-3 top-2 h-5 w-5 text-gray-500" />
-                                    )}
+                            <div className="flex flex-1 flex-col gap-4 p-4">
+                                <div className="flex items-center w-full max-w-md gap-2">
+                                    {/* Search input container */}
+                                    <div className="relative flex-grow">
+                                        <Search className="absolute left-2 top-2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            placeholder="Search by Firstname or Lastname..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-9"
+                                        />
+                                        {loading && (
+                                            <Spinner className="absolute right-3 top-2 h-5 w-5 text-gray-500" />
+                                        )}
+                                    </div>
+
+                                    {/* Export button */}
+
+                                    <Button onClick={exportToExcel} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
+                                        <DownloadCloud size={18} />  Export Data
+                                    </Button>
                                 </div>
 
-                                {/* Export button */}
 
-                                <Button onClick={exportToExcel} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200">
-                                    <DownloadCloud size={18} />  Export Data
-                                </Button>
-                            </div>
+                                <div className="w-full overflow-x-auto border rounded-md shadow-sm bg-white">
+                                    <Table className="min-w-full table-auto">
+                                        <caption className="text-sm font-semibold mb-3 text-gray-700 px-4 pt-4">
+                                            Timesheet Summary —{" "}
+                                            <span className="text-gray-500">
+                                                {dateCreatedFilterRange
+                                                    ? `${formatDateLabel(new Date(dateCreatedFilterRange.from!))} - ${formatDateLabel(new Date(dateCreatedFilterRange.to!))}`
+                                                    : "All Dates"}
+                                            </span>
+                                        </caption>
 
-
-                            <div className="w-full overflow-x-auto border rounded-md shadow-sm bg-white">
-                                <Table className="min-w-full table-auto">
-                                    <caption className="text-sm font-semibold mb-3 text-gray-700 px-4 pt-4">
-                                        Timesheet Summary —{" "}
-                                        <span className="text-gray-500">
-                                            {dateCreatedFilterRange
-                                                ? `${formatDateLabel(new Date(dateCreatedFilterRange.from!))} - ${formatDateLabel(new Date(dateCreatedFilterRange.to!))}`
-                                                : "All Dates"}
-                                        </span>
-                                    </caption>
-
-                                    <TableHeader className="bg-gray-100 sticky top-0 z-10">
-                                        <TableRow className="text-xs whitespace-nowrap">
-                                            <TableHead className="text-left px-4 py-2">Name</TableHead>
-                                            {dayHeaders.map(({ label }) => (
-                                                <TableHead
-                                                    key={label}
-                                                    className="text-right px-4 py-2"
-                                                    title={label}
-                                                >
-                                                    {label}
-                                                </TableHead>
-                                            ))}
-                                            <TableHead className="text-right px-4 py-2">Total Hrs</TableHead>
-                                            <TableHead className="text-right px-4 py-2">Late</TableHead>
-                                            <TableHead className="text-right px-4 py-2">Undertime</TableHead>
-                                            <TableHead className="text-right px-4 py-2">Overtime</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-
-                                    <TableBody className="text-xs whitespace-nowrap">
-                                        {Object.keys(weeklyData).length === 0 && (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={7 + dayHeaders.length}
-                                                    className="text-center p-6 text-gray-500"
-                                                >
-                                                    No timesheet records found.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-
-                                        {Object.entries(weeklyData)
-                                            .filter(([_, week]) => {
-                                                const totalHours = dayHeaders.reduce(
-                                                    (sum, { dateStr }) => sum + (week[dateStr] ?? 0),
-                                                    0
-                                                );
-                                                const totalOthers = week.late + week.undertime + week.overtime;
-                                                return totalHours > 0 || totalOthers > 0;
-                                            })
-                                            .map(([ref, week], idx) => {
-                                                const u = usersMap[ref];
-                                                const name = u ? `${u.Firstname} ${u.Lastname}` : ref;
-                                                const total = dayHeaders.reduce(
-                                                    (sum, { dateStr }) => sum + (week[dateStr] ?? 0),
-                                                    0
-                                                );
-
-                                                return (
-                                                    <TableRow
-                                                        key={ref}
-                                                        className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                                                            } hover:bg-blue-50`}
+                                        <TableHeader className="bg-gray-100 sticky top-0 z-10">
+                                            <TableRow className="text-xs whitespace-nowrap">
+                                                <TableHead className="text-left px-4 py-2">Name</TableHead>
+                                                {dayHeaders.map(({ label }) => (
+                                                    <TableHead
+                                                        key={label}
+                                                        className="text-right px-4 py-2"
+                                                        title={label}
                                                     >
-                                                        <TableCell
-                                                            className="capitalize px-4 py-2 font-medium max-w-xs truncate flex items-center gap-2"
-                                                            title={name}
+                                                        {label}
+                                                    </TableHead>
+                                                ))}
+                                                <TableHead className="text-right px-4 py-2">Total Hrs</TableHead>
+                                                <TableHead className="text-right px-4 py-2">Late</TableHead>
+                                                <TableHead className="text-right px-4 py-2">Undertime</TableHead>
+                                                <TableHead className="text-right px-4 py-2">Overtime</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+
+                                        <TableBody className="text-xs whitespace-nowrap">
+                                            {Object.keys(weeklyData).length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={7 + dayHeaders.length}
+                                                        className="text-center p-6 text-gray-500"
+                                                    >
+                                                        No timesheet records found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+
+                                            {Object.entries(weeklyData)
+                                                .filter(([_, week]) => {
+                                                    const totalHours = dayHeaders.reduce(
+                                                        (sum, { dateStr }) => sum + (week[dateStr] ?? 0),
+                                                        0
+                                                    );
+                                                    const totalOthers = week.late + week.undertime + week.overtime;
+                                                    return totalHours > 0 || totalOthers > 0;
+                                                })
+                                                .map(([ref, week], idx) => {
+                                                    const u = usersMap[ref];
+                                                    const name = u ? `${u.Firstname} ${u.Lastname}` : ref;
+                                                    const total = dayHeaders.reduce(
+                                                        (sum, { dateStr }) => sum + (week[dateStr] ?? 0),
+                                                        0
+                                                    );
+
+                                                    return (
+                                                        <TableRow
+                                                            key={ref}
+                                                            className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                                                } hover:bg-blue-50`}
                                                         >
-                                                            {name}
-                                                            {/* Info button */}
-                                                            <button
-                                                                aria-label={`Show computation details for ${name}`}
-                                                                onClick={() => setSelectedRef(ref)}
-                                                                className="text-blue-500 hover:text-blue-700"
-                                                                type="button"
-                                                            >
-                                                                <InfoIcon className="h-4 w-4" />
-                                                            </button>
-                                                        </TableCell>
-
-                                                        {dayHeaders.map(({ dateStr }) => (
                                                             <TableCell
-                                                                key={dateStr}
-                                                                className="text-right px-4 py-2 font-mono"
-                                                                title={week[dateStr] ? week[dateStr].toFixed(2) : "No data"}
+                                                                className="capitalize px-4 py-2 font-medium max-w-xs truncate flex items-center gap-2"
+                                                                title={name}
                                                             >
-                                                                {week[dateStr] ? week[dateStr].toFixed(2) : "-"}
+                                                                {name}
+                                                                {/* Info button */}
+                                                                <button
+                                                                    aria-label={`Show computation details for ${name}`}
+                                                                    onClick={() => setSelectedRef(ref)}
+                                                                    className="text-blue-500 hover:text-blue-700"
+                                                                    type="button"
+                                                                >
+                                                                    <InfoIcon className="h-4 w-4" />
+                                                                </button>
                                                             </TableCell>
-                                                        ))}
 
-                                                        <TableCell className="text-right px-4 py-2 font-bold font-mono">
-                                                            {total.toFixed(2)}
-                                                        </TableCell>
+                                                            {dayHeaders.map(({ dateStr }) => (
+                                                                <TableCell
+                                                                    key={dateStr}
+                                                                    className="text-right px-4 py-2 font-mono"
+                                                                    title={week[dateStr] ? week[dateStr].toFixed(2) : "No data"}
+                                                                >
+                                                                    {week[dateStr] ? week[dateStr].toFixed(2) : "-"}
+                                                                </TableCell>
+                                                            ))}
 
-                                                        {/* Colored badges */}
-                                                        <TableCell className="text-right px-4 py-2">
-                                                            {week.late > 0 ? (
-                                                                <span className="inline-block rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-semibold">
-                                                                    {week.late.toFixed(2)}
-                                                                </span>
-                                                            ) : (
-                                                                "-"
-                                                            )}
-                                                        </TableCell>
+                                                            <TableCell className="text-right px-4 py-2 font-bold font-mono">
+                                                                {total.toFixed(2)}
+                                                            </TableCell>
 
-                                                        <TableCell className="text-right px-4 py-2">
-                                                            {week.undertime > 0 ? (
-                                                                <span className="inline-block rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold">
-                                                                    {week.undertime.toFixed(2)}
-                                                                </span>
-                                                            ) : (
-                                                                "-"
-                                                            )}
-                                                        </TableCell>
+                                                            {/* Colored badges */}
+                                                            <TableCell className="text-right px-4 py-2">
+                                                                {week.late > 0 ? (
+                                                                    <span className="inline-block rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-semibold">
+                                                                        {week.late.toFixed(2)}
+                                                                    </span>
+                                                                ) : (
+                                                                    "-"
+                                                                )}
+                                                            </TableCell>
 
-                                                        <TableCell className="text-right px-4 py-2">
-                                                            {week.overtime > 0 ? (
-                                                                <span className="inline-block rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-xs font-semibold">
-                                                                    {week.overtime.toFixed(2)}
-                                                                </span>
-                                                            ) : (
-                                                                "-"
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                    </TableBody>
-                                </Table>
+                                                            <TableCell className="text-right px-4 py-2">
+                                                                {week.undertime > 0 ? (
+                                                                    <span className="inline-block rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold">
+                                                                        {week.undertime.toFixed(2)}
+                                                                    </span>
+                                                                ) : (
+                                                                    "-"
+                                                                )}
+                                                            </TableCell>
+
+                                                            <TableCell className="text-right px-4 py-2">
+                                                                {week.overtime > 0 ? (
+                                                                    <span className="inline-block rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-xs font-semibold">
+                                                                        {week.overtime.toFixed(2)}
+                                                                    </span>
+                                                                ) : (
+                                                                    "-"
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                {/* Dialog for computation details */}
+                                {selectedRef && (
+                                    <Dialog open={true} onOpenChange={() => setSelectedRef(null)}>
+                                        <DialogContent>
+                                            <DialogTitle>Computation Details</DialogTitle>
+                                            <pre className="whitespace-pre-wrap text-sm mt-2">
+                                                {getComputationDetails(selectedRef)}
+                                            </pre>
+                                            <button
+                                                onClick={() => setSelectedRef(null)}
+                                                className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                            >
+                                                Close
+                                            </button>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                             </div>
-                            {/* Dialog for computation details */}
-                            {selectedRef && (
-                                <Dialog open={true} onOpenChange={() => setSelectedRef(null)}>
-                                    <DialogContent>
-                                        <DialogTitle>Computation Details</DialogTitle>
-                                        <pre className="whitespace-pre-wrap text-sm mt-2">
-                                            {getComputationDetails(selectedRef)}
-                                        </pre>
-                                        <button
-                                            onClick={() => setSelectedRef(null)}
-                                            className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                                        >
-                                            Close
-                                        </button>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                        </div>
-                    </SidebarInset>
-                </SidebarProvider>
-            </FormatProvider>
-        </UserProvider>
+                        </SidebarInset>
+                    </SidebarProvider>
+                </FormatProvider>
+            </UserProvider>
+        </ProtectedPageWrapper>
     );
 }

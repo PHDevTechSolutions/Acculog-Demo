@@ -21,6 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import "leaflet/dist/leaflet.css";
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
 
 // Dynamically import LocationMap with SSR disabled
 const LocationMap = dynamic(() => import("@/components/location-map"), {
@@ -225,53 +226,55 @@ export default function Page() {
   if (!userDetails) return <p className="p-4">Loading user details...</p>;
 
   return (
-    <UserProvider>
-      <FormatProvider>
-        <SidebarProvider>
-          <AppSidebar
-            userId={userId ?? undefined}
-            dateCreatedFilterRange={dateCreatedFilterRange}
-            setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-          />
-          <SidebarInset>
-            <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Location Map</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </header>
-
-            <main className="flex-1 p-4 h-[calc(100vh-64px)]">
-              {loading && <p>Loading activity logs...</p>}
-
-              {!loading && postsWithLocation.length === 0 && (
-                <p>No data available for your account in this date range.</p>
-              )}
-
-              {!loading && postsWithLocation.length > 0 && (
-                <LocationMap
-                  postsWithLocation={postsWithLocation}
-                  usersMap={usersMap}
+    <ProtectedPageWrapper>
+      <UserProvider>
+        <FormatProvider>
+          <SidebarProvider>
+            <AppSidebar
+              userId={userId ?? undefined}
+              dateCreatedFilterRange={dateCreatedFilterRange}
+              setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+            />
+            <SidebarInset>
+              <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4"
                 />
-              )}
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>Location Map</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </header>
 
-              <style jsx global>{`
+              <main className="flex-1 p-4 h-[calc(100vh-64px)]">
+                {loading && <p>Loading activity logs...</p>}
+
+                {!loading && postsWithLocation.length === 0 && (
+                  <p>No data available for your account in this date range.</p>
+                )}
+
+                {!loading && postsWithLocation.length > 0 && (
+                  <LocationMap
+                    postsWithLocation={postsWithLocation}
+                    usersMap={usersMap}
+                  />
+                )}
+
+                <style jsx global>{`
                 .leaflet-pane {
                   z-index: 0 !important;
                 }
               `}</style>
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </FormatProvider>
-    </UserProvider>
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        </FormatProvider>
+      </UserProvider>
+    </ProtectedPageWrapper>
   );
 }

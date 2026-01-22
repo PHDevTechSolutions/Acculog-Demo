@@ -39,6 +39,9 @@ import {
     type ChartConfig,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge"
+
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
+
 /* ================= TYPES ================= */
 
 interface UserDetails {
@@ -333,62 +336,64 @@ function ChartBarLabelCustom({
     color: string;
 }) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                {description && <CardDescription>{description}</CardDescription>}
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig}>
-                    <BarChart
-                        accessibilityLayer
-                        data={data}
-                        layout="vertical"
-                        margin={{
-                            right: 100,
-                        }}
-                    >
-                        <CartesianGrid horizontal={false} />
-                        <YAxis
-                            dataKey="month"
-                            type="category"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            tickFormatter={(value) => (value.length > 10 ? value.slice(0, 10) + "..." : value)}
-                            width={150}
-                        />
-                        <XAxis dataKey="desktop" type="number" hide />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="line" />}
-                        />
-                        <Bar
-                            dataKey="desktop"
+        <ProtectedPageWrapper>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                    {description && <CardDescription>{description}</CardDescription>}
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={chartConfig}>
+                        <BarChart
+                            accessibilityLayer
+                            data={data}
                             layout="vertical"
-                            fill={color}
-                            radius={4}
+                            margin={{
+                                right: 100,
+                            }}
                         >
-                            <LabelList
-                                dataKey="desktop"
-                                position="right"
-                                offset={8}
-                                className="fill-foreground"
-                                fontSize={12}
+                            <CartesianGrid horizontal={false} />
+                            <YAxis
+                                dataKey="month"
+                                type="category"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                tickFormatter={(value) => (value.length > 10 ? value.slice(0, 10) + "..." : value)}
+                                width={150}
                             />
-                    
-                        </Bar>
-                    </BarChart>
-                </ChartContainer>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                    Showing total count
-                </div>
-            </CardFooter>
-        </Card>
+                            <XAxis dataKey="desktop" type="number" hide />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent indicator="line" />}
+                            />
+                            <Bar
+                                dataKey="desktop"
+                                layout="vertical"
+                                fill={color}
+                                radius={4}
+                            >
+                                <LabelList
+                                    dataKey="desktop"
+                                    position="right"
+                                    offset={8}
+                                    className="fill-foreground"
+                                    fontSize={12}
+                                />
+
+                            </Bar>
+                        </BarChart>
+                    </ChartContainer>
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-2 text-sm">
+                    <div className="flex gap-2 leading-none font-medium">
+                        Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+                    </div>
+                    <div className="text-muted-foreground leading-none">
+                        Showing total count
+                    </div>
+                </CardFooter>
+            </Card>
+        </ProtectedPageWrapper>
     );
 }

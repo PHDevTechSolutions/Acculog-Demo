@@ -2,17 +2,16 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { serialize } from "cookie";
 import { connectToDatabase } from "@/lib/MongoDB";
 import { validateUser } from "@/lib/MongoDB"; // for password login
-import base64url from "base64url";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { Email, Password, credentialId } = req.body;
+  const { Email, Password, credentialId, deviceId } = req.body;
 
-  if (!Email) {
-    return res.status(400).json({ message: "Email is required." });
+  if (!Email || !deviceId) {
+    return res.status(400).json({ message: "Email and deviceId are required." });
   }
 
   const db = await connectToDatabase();
@@ -38,8 +37,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: "Invalid fingerprint credential." });
     }
 
-    // Fingerprint (WebAuthn) is valid, set cookie
+    // Fingerprint (WebAuthn) is valid, save deviceId and set cookie
     const userId = user._id.toString();
+
+    await usersCollection.updateOne(
+      { Email },
+      { $set: { DeviceId: deviceId } }
+    );
+
     res.setHeader(
       "Set-Cookie",
       serialize("session", userId, {
@@ -67,6 +72,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!result.success || !result.user) {
     return res.status(401).json({ message: "Invalid credentials." });
   }
+
+  // Save deviceId on successful login
+  await usersCollection.updateOne(
+    { Email },
+    { $set: { DeviceId: deviceId } }
+  );
 
   const userId = result.user._id.toString();
 

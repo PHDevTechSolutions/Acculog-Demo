@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator, } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { v4 as uuidv4 } from "uuid";
 
 export function LoginForm({
   className,
@@ -19,8 +20,19 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  function getDeviceId() {
+    let deviceId = localStorage.getItem("deviceId");
+    if (!deviceId) {
+      deviceId = uuidv4();
+      localStorage.setItem("deviceId", deviceId);
+    }
+    return deviceId;
+  }
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
+      const deviceId = getDeviceId();
+
       e.preventDefault();
       if (!Email || !Password) {
         toast.error("Email and Password are required!");
@@ -32,7 +44,7 @@ export function LoginForm({
         const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ Email, Password }),
+          body: JSON.stringify({ Email, Password, deviceId }),
         });
 
         const result = await response.json();

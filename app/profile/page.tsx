@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { type DateRange } from "react-day-picker";
 
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
+
 interface UserDetails {
     id: string;
     Firstname: string;
@@ -226,232 +228,234 @@ export default function NavProfilePage() {
 
     return (
         <>
-            <UserProvider>
-                <FormatProvider>
-                    <SidebarProvider>
-                        <AppSidebar
-                                    userId={userId ?? undefined}
-                                    dateCreatedFilterRange={dateCreatedFilterRange}
-                                    setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-                                  />
-                        <SidebarInset>
-                            <header className="bg-background sticky top-0 flex h-14 shrink-0 items-center gap-2">
-                                <div className="flex flex-1 items-center gap-2 px-3">
-                                    <SidebarTrigger />
-                                    <Separator
-                                        orientation="vertical"
-                                        className="mr-2 data-[orientation=vertical]:h-4"
-                                    />
-                                    <Breadcrumb>
-                                        <BreadcrumbList>
-                                            <BreadcrumbItem>
-                                                <BreadcrumbPage className="line-clamp-1">
-                                                    Project Management & Task Tracking
-                                                </BreadcrumbPage>
-                                            </BreadcrumbItem>
-                                        </BreadcrumbList>
-                                    </Breadcrumb>
-                                </div>
-                            </header>
-
-                            <div className="flex flex-1 flex-col gap-2 p-4">
-                                <h1 className="text-2xl font-semibold mb-4">Update Profile</h1>
-
-                                {/* Parent container with 2 columns */}
-                                <div className="flex flex-col md:flex-row gap-2">
-                                    {/* LEFT SIDE: Profile Picture */}
-                                    <div className="w-full md:w-1/2 flex flex-col items-center space-y-4 border rounded p-4">
-                                        {/* Full-size image container */}
-                                        <AspectRatio ratio={16 / 14} className="w-full bg-muted rounded-lg overflow-hidden border border-gray-300">
-                                            {userDetails.profilePicture ? (
-                                                <Image
-                                                    src={userDetails.profilePicture}
-                                                    alt="Profile"
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                                                    No photo
-                                                </div>
-                                            )}
-                                        </AspectRatio>
-
-                                        <Label htmlFor="profilePicture">
-                                            Profile Picture
-                                        </Label>
-
-                                        {/* Hidden file input */}
-                                        <input
-                                            type="file"
-                                            id="profilePicture"
-                                            accept="image/*"
-                                            onChange={onImageChange}
-                                            disabled={uploading}
-                                            className="hidden"
+            <ProtectedPageWrapper>
+                <UserProvider>
+                    <FormatProvider>
+                        <SidebarProvider>
+                            <AppSidebar
+                                userId={userId ?? undefined}
+                                dateCreatedFilterRange={dateCreatedFilterRange}
+                                setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+                            />
+                            <SidebarInset>
+                                <header className="bg-background sticky top-0 flex h-14 shrink-0 items-center gap-2">
+                                    <div className="flex flex-1 items-center gap-2 px-3">
+                                        <SidebarTrigger />
+                                        <Separator
+                                            orientation="vertical"
+                                            className="mr-2 data-[orientation=vertical]:h-4"
                                         />
-
-                                        {/* Styled button to trigger file input */}
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="w-auto"
-                                            onClick={() => document.getElementById("profilePicture")?.click()}
-                                            disabled={uploading}
-                                        >
-                                            {uploading ? "Uploading..." : "Change Avatar Photo"}
-                                        </Button>
+                                        <Breadcrumb>
+                                            <BreadcrumbList>
+                                                <BreadcrumbItem>
+                                                    <BreadcrumbPage className="line-clamp-1">
+                                                        Project Management & Task Tracking
+                                                    </BreadcrumbPage>
+                                                </BreadcrumbItem>
+                                            </BreadcrumbList>
+                                        </Breadcrumb>
                                     </div>
+                                </header>
 
-                                    {/* RIGHT SIDE: Form Fields */}
-                                    <div className="flex-1">
-                                        <form onSubmit={handleSubmit} className="space-y-6 border rounded p-2" noValidate>
-                                            {/* Name fields in one row */}
-                                            <fieldset className="flex flex-col md:flex-row space-x-0 md:space-x-4 border border-gray-300 rounded-md p-4">
-                                                <legend className="text-sm font-semibold px-2">Name</legend>
+                                <div className="flex flex-1 flex-col gap-2 p-4">
+                                    <h1 className="text-2xl font-semibold mb-4">Update Profile</h1>
 
-                                                <div className="flex flex-col flex-1 space-y-2">
-                                                    <Label htmlFor="Firstname">First Name</Label>
-                                                    <Input
-                                                        type="text"
-                                                        id="Firstname"
-                                                        name="Firstname"
-                                                        value={userDetails.Firstname}
-                                                        onChange={handleChange}
-                                                        autoComplete="given-name"
-                                                        required
+                                    {/* Parent container with 2 columns */}
+                                    <div className="flex flex-col md:flex-row gap-2">
+                                        {/* LEFT SIDE: Profile Picture */}
+                                        <div className="w-full md:w-1/2 flex flex-col items-center space-y-4 border rounded p-4">
+                                            {/* Full-size image container */}
+                                            <AspectRatio ratio={16 / 14} className="w-full bg-muted rounded-lg overflow-hidden border border-gray-300">
+                                                {userDetails.profilePicture ? (
+                                                    <Image
+                                                        src={userDetails.profilePicture}
+                                                        alt="Profile"
+                                                        fill
+                                                        className="object-cover"
                                                     />
-                                                </div>
-
-                                                <div className="flex flex-col flex-1 space-y-2">
-                                                    <Label htmlFor="Lastname">Last Name</Label>
-                                                    <Input
-                                                        type="text"
-                                                        id="Lastname"
-                                                        name="Lastname"
-                                                        value={userDetails.Lastname}
-                                                        onChange={handleChange}
-                                                        autoComplete="family-name"
-                                                        required
-                                                    />
-                                                </div>
-                                            </fieldset>
-
-                                            {/* Contact Details */}
-                                            <fieldset className="flex flex-col md:flex-row space-x-0 md:space-x-4 border border-gray-300 rounded-md p-4">
-                                                <legend className="text-sm font-semibold px-2">Contact Details</legend>
-
-                                                <div className="flex flex-col flex-1 space-y-2">
-                                                    <Label htmlFor="Email">Email Address</Label>
-                                                    <Input
-                                                        type="email"
-                                                        id="Email"
-                                                        name="Email"
-                                                        value={userDetails.Email}
-                                                        onChange={handleChange}
-                                                        autoComplete="email"
-                                                        required
-                                                    />
-                                                </div>
-
-                                                <div className="flex flex-col flex-1 space-y-2">
-                                                    <Label htmlFor="ContactNumber">Contact Number</Label>
-                                                    <Input
-                                                        type="text"
-                                                        id="ContactNumber"
-                                                        name="ContactNumber"
-                                                        value={userDetails.ContactNumber}
-                                                        onChange={handleChange}
-                                                        autoComplete="tel"
-                                                    />
-                                                </div>
-                                            </fieldset>
-
-                                            {/* Password */}
-                                            <div className="flex flex-col space-y-2 relative">
-                                                <Label htmlFor="Password">Password</Label>
-                                                <Input
-                                                    type={showPassword ? "text" : "password"}
-                                                    id="Password"
-                                                    name="Password"
-                                                    value={userDetails.Password || ""}
-                                                    onChange={handleChange}
-                                                    maxLength={10}
-                                                    autoComplete="new-password"
-                                                />
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                    >
-                                                        {showPassword ? "Hide" : "Show"}
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={handleGeneratePassword}
-                                                    >
-                                                        Generate
-                                                    </Button>
-                                                </div>
-                                                {passwordStrength && (
-                                                    <p
-                                                        className={`text-sm ${passwordStrength === "strong"
-                                                            ? "text-green-600"
-                                                            : passwordStrength === "medium"
-                                                                ? "text-yellow-600"
-                                                                : "text-red-600"
-                                                            }`}
-                                                    >
-                                                        Password strength: {passwordStrength}
-                                                    </p>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                                                        No photo
+                                                    </div>
                                                 )}
-                                            </div>
+                                            </AspectRatio>
 
-                                            {/* Confirm Password */}
-                                            <div className="flex flex-col space-y-2 relative">
-                                                <Label htmlFor="ContactPassword">Confirm Password</Label>
-                                                <Input
-                                                    type={showConfirmPassword ? "text" : "password"}
-                                                    id="ContactPassword"
-                                                    name="ContactPassword"
-                                                    value={userDetails.ContactPassword || ""}
-                                                    onChange={handleChange}
-                                                    maxLength={10}
-                                                    autoComplete="new-password"
-                                                />
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    >
-                                                        {showConfirmPassword ? "Hide" : "Show"}
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                            <Label htmlFor="profilePicture">
+                                                Profile Picture
+                                            </Label>
 
-                                            {/* Submit Button */}
-                                            <Button type="submit" disabled={saving || uploading} className="w-full md:w-auto">
-                                                {saving
-                                                    ? "Saving..."
-                                                    : uploading
-                                                        ? "Uploading..."
-                                                        : "Save Changes"}
+                                            {/* Hidden file input */}
+                                            <input
+                                                type="file"
+                                                id="profilePicture"
+                                                accept="image/*"
+                                                onChange={onImageChange}
+                                                disabled={uploading}
+                                                className="hidden"
+                                            />
+
+                                            {/* Styled button to trigger file input */}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-auto"
+                                                onClick={() => document.getElementById("profilePicture")?.click()}
+                                                disabled={uploading}
+                                            >
+                                                {uploading ? "Uploading..." : "Change Avatar Photo"}
                                             </Button>
-                                        </form>
+                                        </div>
+
+                                        {/* RIGHT SIDE: Form Fields */}
+                                        <div className="flex-1">
+                                            <form onSubmit={handleSubmit} className="space-y-6 border rounded p-2" noValidate>
+                                                {/* Name fields in one row */}
+                                                <fieldset className="flex flex-col md:flex-row space-x-0 md:space-x-4 border border-gray-300 rounded-md p-4">
+                                                    <legend className="text-sm font-semibold px-2">Name</legend>
+
+                                                    <div className="flex flex-col flex-1 space-y-2">
+                                                        <Label htmlFor="Firstname">First Name</Label>
+                                                        <Input
+                                                            type="text"
+                                                            id="Firstname"
+                                                            name="Firstname"
+                                                            value={userDetails.Firstname}
+                                                            onChange={handleChange}
+                                                            autoComplete="given-name"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex flex-col flex-1 space-y-2">
+                                                        <Label htmlFor="Lastname">Last Name</Label>
+                                                        <Input
+                                                            type="text"
+                                                            id="Lastname"
+                                                            name="Lastname"
+                                                            value={userDetails.Lastname}
+                                                            onChange={handleChange}
+                                                            autoComplete="family-name"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </fieldset>
+
+                                                {/* Contact Details */}
+                                                <fieldset className="flex flex-col md:flex-row space-x-0 md:space-x-4 border border-gray-300 rounded-md p-4">
+                                                    <legend className="text-sm font-semibold px-2">Contact Details</legend>
+
+                                                    <div className="flex flex-col flex-1 space-y-2">
+                                                        <Label htmlFor="Email">Email Address</Label>
+                                                        <Input
+                                                            type="email"
+                                                            id="Email"
+                                                            name="Email"
+                                                            value={userDetails.Email}
+                                                            onChange={handleChange}
+                                                            autoComplete="email"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex flex-col flex-1 space-y-2">
+                                                        <Label htmlFor="ContactNumber">Contact Number</Label>
+                                                        <Input
+                                                            type="text"
+                                                            id="ContactNumber"
+                                                            name="ContactNumber"
+                                                            value={userDetails.ContactNumber}
+                                                            onChange={handleChange}
+                                                            autoComplete="tel"
+                                                        />
+                                                    </div>
+                                                </fieldset>
+
+                                                {/* Password */}
+                                                <div className="flex flex-col space-y-2 relative">
+                                                    <Label htmlFor="Password">Password</Label>
+                                                    <Input
+                                                        type={showPassword ? "text" : "password"}
+                                                        id="Password"
+                                                        name="Password"
+                                                        value={userDetails.Password || ""}
+                                                        onChange={handleChange}
+                                                        maxLength={10}
+                                                        autoComplete="new-password"
+                                                    />
+                                                    <div className="flex items-center space-x-2 mt-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                        >
+                                                            {showPassword ? "Hide" : "Show"}
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={handleGeneratePassword}
+                                                        >
+                                                            Generate
+                                                        </Button>
+                                                    </div>
+                                                    {passwordStrength && (
+                                                        <p
+                                                            className={`text-sm ${passwordStrength === "strong"
+                                                                ? "text-green-600"
+                                                                : passwordStrength === "medium"
+                                                                    ? "text-yellow-600"
+                                                                    : "text-red-600"
+                                                                }`}
+                                                        >
+                                                            Password strength: {passwordStrength}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Confirm Password */}
+                                                <div className="flex flex-col space-y-2 relative">
+                                                    <Label htmlFor="ContactPassword">Confirm Password</Label>
+                                                    <Input
+                                                        type={showConfirmPassword ? "text" : "password"}
+                                                        id="ContactPassword"
+                                                        name="ContactPassword"
+                                                        value={userDetails.ContactPassword || ""}
+                                                        onChange={handleChange}
+                                                        maxLength={10}
+                                                        autoComplete="new-password"
+                                                    />
+                                                    <div className="flex items-center space-x-2 mt-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                        >
+                                                            {showConfirmPassword ? "Hide" : "Show"}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Submit Button */}
+                                                <Button type="submit" disabled={saving || uploading} className="w-full md:w-auto">
+                                                    {saving
+                                                        ? "Saving..."
+                                                        : uploading
+                                                            ? "Uploading..."
+                                                            : "Save Changes"}
+                                                </Button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                        </SidebarInset>
-                    </SidebarProvider>
-                </FormatProvider>
-            </UserProvider>
+                            </SidebarInset>
+                        </SidebarProvider>
+                    </FormatProvider>
+                </UserProvider>
+            </ProtectedPageWrapper>
         </>
     );
 }

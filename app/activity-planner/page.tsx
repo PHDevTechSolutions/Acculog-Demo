@@ -24,6 +24,7 @@ import { MapPin, X } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { CalendarCheckIcon, MapPinCheck } from "lucide-react";
 
+import ProtectedPageWrapper from "@/components/protected-page-wrapper";
 // ---------------- Interfaces ----------------
 type TimelineItem = {
   id: string;
@@ -451,199 +452,201 @@ export default function Page() {
 
   // ---------------- Render ----------------
   return (
-    <UserProvider>
-      <FormatProvider>
-        <SidebarProvider>
-          <AppSidebar
-            userId={userId ?? undefined}
-            dateCreatedFilterRange={dateCreatedFilterRange}
-            setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
-          />
-          <SidebarInset>
-            <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      Activity Calendar —{" "}
-                      {currentMonth.toLocaleDateString(undefined, { year: "numeric", month: "long" })}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-              <div className="ml-auto flex gap-2">
-                <button onClick={goToPrevMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                  Prev
-                </button>
-                <button onClick={goToNextMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                  Next
-                </button>
-              </div>
-            </header>
+    <ProtectedPageWrapper>
+      <UserProvider>
+        <FormatProvider>
+          <SidebarProvider>
+            <AppSidebar
+              userId={userId ?? undefined}
+              dateCreatedFilterRange={dateCreatedFilterRange}
+              setDateCreatedFilterRangeAction={setDateCreatedFilterRange}
+            />
+            <SidebarInset>
+              <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>
+                        Activity Calendar —{" "}
+                        {currentMonth.toLocaleDateString(undefined, { year: "numeric", month: "long" })}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+                <div className="ml-auto flex gap-2">
+                  <button onClick={goToPrevMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
+                    Prev
+                  </button>
+                  <button onClick={goToNextMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
+                    Next
+                  </button>
+                </div>
+              </header>
 
-            <main className="p-4 overflow-auto max-h-[calc(100vh-64px)]">
-              {/* Search bar */}
-              <div className="mb-4 flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Search by first name, last name or email..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="flex-grow rounded border px-3 py-2 text-sm"
-                  aria-label="Search events"
-                />
-                {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
-                  <Button onClick={() => setCreateSalesAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
+              <main className="p-4 overflow-auto max-h-[calc(100vh-64px)]">
+                {/* Search bar */}
+                <div className="mb-4 flex items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="Search by first name, last name or email..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="flex-grow rounded border px-3 py-2 text-sm"
+                    aria-label="Search events"
+                  />
+                  {(userDetails?.Role === "Territory Sales Associate" || userDetails?.Role === "Territory Sales Manager") ? (
+                    <Button onClick={() => setCreateSalesAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
 
-                ) : (
-                  <Button onClick={() => setCreateAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
-                )}
-              </div>
+                  ) : (
+                    <Button onClick={() => setCreateAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
+                  )}
+                </div>
 
-              {loading && <p>Loading...</p>}
-              {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+                {loading && <p>Loading...</p>}
+                {error && <p className="text-red-600 mb-4">Error: {error}</p>}
 
-              {!loading && !error && (
-                <div className="grid grid-cols-1 sm:grid-cols-7 gap-1 text-center select-none">
-                  {/* Days grid */}
-                  {calendarDays.map((date, idx) => {
-                    const dateKey = toLocalDateKey(date);
-                    const logs = groupedByDate[dateKey] || [];
-                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                    const isToday = isSameDay(date, today);
-                    const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
+                {!loading && !error && (
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-1 text-center select-none">
+                    {/* Days grid */}
+                    {calendarDays.map((date, idx) => {
+                      const dateKey = toLocalDateKey(date);
+                      const logs = groupedByDate[dateKey] || [];
+                      const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+                      const isToday = isSameDay(date, today);
+                      const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
 
-                    return (
-                      <div
-                        key={idx}
-                        className={`min-h-[110px] p-2 rounded border flex flex-col text-left
+                      return (
+                        <div
+                          key={idx}
+                          className={`min-h-[110px] p-2 rounded border flex flex-col text-left
             ${isCurrentMonth ? "bg-white border-gray-300" : "bg-gray-50 text-gray-400 border-gray-200"}
             ${isToday ? "border-blue-500 border-2" : ""}
           `}
-                      >
-                        {/* Always show day number + name */}
-                        <div className="text-sm font-semibold mb-1">
-                          {date.getDate()} - {dayName}
+                        >
+                          {/* Always show day number + name */}
+                          <div className="text-sm font-semibold mb-1">
+                            {date.getDate()} - {dayName}
+                          </div>
+
+                          <ul className="text-xs overflow-auto flex-1 space-y-1 max-h-[90px]">
+                            {logs.length === 0 && <li className="text-gray-400 italic">No events</li>}
+                            {logs.map((log) => {
+                              const user = usersMap[log.ReferenceID];
+                              return (
+                                <li
+                                  key={log._id ?? log.date_created}
+                                  className="truncate flex items-center space-x-2 cursor-pointer hover:bg-blue-200"
+                                  title={`${log.Type} - ${log.Status} @ ${new Date(log.date_created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+                                  onClick={() => onEventClick(log)}
+                                >
+                                  {user?.profilePicture ? (
+                                    <img
+                                      src={user.profilePicture}
+                                      alt={`${user.Firstname} ${user.Lastname}`}
+                                      className="w-5 h-5 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">?</div>
+                                  )}
+                                  <span className="flex-1 text-[10px]">
+                                    <strong>{user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}</strong> - <strong className="bg-blue-100 text-blue-800 rounded px-1">{log.Type}</strong>: {log.Status}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
                         </div>
-
-                        <ul className="text-xs overflow-auto flex-1 space-y-1 max-h-[90px]">
-                          {logs.length === 0 && <li className="text-gray-400 italic">No events</li>}
-                          {logs.map((log) => {
-                            const user = usersMap[log.ReferenceID];
-                            return (
-                              <li
-                                key={log._id ?? log.date_created}
-                                className="truncate flex items-center space-x-2 cursor-pointer hover:bg-blue-200"
-                                title={`${log.Type} - ${log.Status} @ ${new Date(log.date_created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-                                onClick={() => onEventClick(log)}
-                              >
-                                {user?.profilePicture ? (
-                                  <img
-                                    src={user.profilePicture}
-                                    alt={`${user.Firstname} ${user.Lastname}`}
-                                    className="w-5 h-5 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">?</div>
-                                )}
-                                <span className="flex-1 text-[10px]">
-                                  <strong>{user ? `${user.Firstname} ${user.Lastname}` : "Unknown User"}</strong> - <strong className="bg-blue-100 text-blue-800 rounded px-1">{log.Type}</strong>: {log.Status}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Floating panel for today's Site Visits */}
-              {isPanelOpen ? (
-                <div
-                  className="fixed bottom-4 right-4 max-w-sm w-96 max-h-96 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 flex flex-col"
-                  aria-label="Today's Client Visits"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold text-lg">Today's Visits</h3>
-                    <button
-                      onClick={() => setIsPanelOpen(false)}
-                      aria-label="Close panel"
-                      className="p-1 rounded hover:bg-gray-200"
-                    >
-                      <X size={20} />
-                    </button>
+                      );
+                    })}
                   </div>
+                )}
 
-                  {timelineItems.length === 0 ? (
-                    <p className="text-xs text-gray-500">No login status today.</p>
-                  ) : (
-                    <InteractiveTimeline items={timelineItems} />
-                  )}
-                </div>
-              ) : (
-                // Floating Map Icon button when panel closed
-                <button
-                  onClick={() => setIsPanelOpen(true)}
-                  aria-label="Open login status panel"
-                  className="fixed bottom-4 right-4 z-50 rounded-full bg-white p-3 shadow-lg border border-gray-300 hover:bg-gray-100"
-                >
-                  <MapPin size={28} />
-                  {todayVisits.length > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                      {todayVisits.length}
-                    </span>
-                  )}
-                </button>
-              )}
+                {/* Floating panel for today's Site Visits */}
+                {isPanelOpen ? (
+                  <div
+                    className="fixed bottom-4 right-4 max-w-sm w-96 max-h-96 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 flex flex-col"
+                    aria-label="Today's Client Visits"
+                  >
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="font-semibold text-lg">Today's Visits</h3>
+                      <button
+                        onClick={() => setIsPanelOpen(false)}
+                        aria-label="Close panel"
+                        className="p-1 rounded hover:bg-gray-200"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
 
-              {/* Create Attendance Dialog */}
-              <CreateAttendance
-                open={createAttendanceOpen}
-                onOpenChangeAction={setCreateAttendanceOpen}
-                formData={formData}
-                onChangeAction={onChangeAction}
-                userDetails={{
-                  ReferenceID: userDetails?.ReferenceID ?? "",
-                  Email: userDetails?.Email ?? "",
-                  TSM: userDetails?.TSM ?? ""
-                }}
-                fetchAccountAction={fetchAccountAction}
-                setFormAction={setFormData}
-              />
+                    {timelineItems.length === 0 ? (
+                      <p className="text-xs text-gray-500">No login status today.</p>
+                    ) : (
+                      <InteractiveTimeline items={timelineItems} />
+                    )}
+                  </div>
+                ) : (
+                  // Floating Map Icon button when panel closed
+                  <button
+                    onClick={() => setIsPanelOpen(true)}
+                    aria-label="Open login status panel"
+                    className="fixed bottom-4 right-4 z-50 rounded-full bg-white p-3 shadow-lg border border-gray-300 hover:bg-gray-100"
+                  >
+                    <MapPin size={28} />
+                    {todayVisits.length > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                        {todayVisits.length}
+                      </span>
+                    )}
+                  </button>
+                )}
 
-              {/* Create TSA Attendance Dialog */}
-              <CreateSalesAttendance
-                open={createSalesAttendanceOpen}
-                onOpenChangeAction={setCreateSalesAttendanceOpen}
-                formData={formData}
-                onChangeAction={onChangeAction}
-                userDetails={{
-                  ReferenceID: userDetails?.ReferenceID ?? "",
-                  Email: userDetails?.Email ?? "",
-                  TSM: userDetails?.TSM ?? ""
-                }}
-                fetchAccountAction={fetchAccountAction}
-                setFormAction={setFormData}
-              />
+                {/* Create Attendance Dialog */}
+                <CreateAttendance
+                  open={createAttendanceOpen}
+                  onOpenChangeAction={setCreateAttendanceOpen}
+                  formData={formData}
+                  onChangeAction={onChangeAction}
+                  userDetails={{
+                    ReferenceID: userDetails?.ReferenceID ?? "",
+                    Email: userDetails?.Email ?? "",
+                    TSM: userDetails?.TSM ?? ""
+                  }}
+                  fetchAccountAction={fetchAccountAction}
+                  setFormAction={setFormData}
+                />
 
-              {/* Activity Dialog */}
-              <ActivityDialog
-                open={dialogOpen}
-                onOpenChange={(open) => {
-                  setDialogOpen(open);
-                  if (!open) setSelectedEvent(null);
-                }}
-                selectedEvent={selectedEvent}
-                usersMap={usersMap}
-              />
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </FormatProvider>
-    </UserProvider>
+                {/* Create TSA Attendance Dialog */}
+                <CreateSalesAttendance
+                  open={createSalesAttendanceOpen}
+                  onOpenChangeAction={setCreateSalesAttendanceOpen}
+                  formData={formData}
+                  onChangeAction={onChangeAction}
+                  userDetails={{
+                    ReferenceID: userDetails?.ReferenceID ?? "",
+                    Email: userDetails?.Email ?? "",
+                    TSM: userDetails?.TSM ?? ""
+                  }}
+                  fetchAccountAction={fetchAccountAction}
+                  setFormAction={setFormData}
+                />
+
+                {/* Activity Dialog */}
+                <ActivityDialog
+                  open={dialogOpen}
+                  onOpenChange={(open) => {
+                    setDialogOpen(open);
+                    if (!open) setSelectedEvent(null);
+                  }}
+                  selectedEvent={selectedEvent}
+                  usersMap={usersMap}
+                />
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        </FormatProvider>
+      </UserProvider>
+    </ProtectedPageWrapper>
   );
 }
