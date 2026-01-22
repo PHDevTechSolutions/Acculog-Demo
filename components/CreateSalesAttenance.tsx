@@ -395,17 +395,13 @@ export default function CreateAttendance({
                         <SelectValue placeholder="Select Account" />
                       </SelectTrigger>
                       <SelectContent>
-                        {siteVisitAccounts.length === 0 && (
-                          <SelectItem value="" disabled>
-                            No accounts available
-                          </SelectItem>
-                        )}
                         {siteVisitAccounts.map((acc) => (
                           <SelectItem key={acc.company_name} value={acc.company_name}>
                             {acc.company_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
+
                     </Select>
                   )}
                 </div>
