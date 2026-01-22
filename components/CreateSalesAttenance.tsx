@@ -299,7 +299,7 @@ export default function CreateAttendance({
     <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent className="rounded-lg max-h-[90vh] overflow-y-auto w-full max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create Sales Attendance</DialogTitle>
+          <DialogTitle>Create Attendance</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-4">
@@ -366,9 +366,6 @@ export default function CreateAttendance({
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Client Visit">
-                      On Field
-                    </SelectItem>
                     <SelectItem value="Site Visit">
                       Site Visit
                     </SelectItem>

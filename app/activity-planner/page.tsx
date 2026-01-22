@@ -59,6 +59,7 @@ interface UserInfo {
   Lastname: string;
   profilePicture?: string;
   TSM: string;
+  Directories: string[];
 }
 
 interface UserDetails {
@@ -72,6 +73,7 @@ interface UserDetails {
   ReferenceID: string;
   profilePicture?: string;
   TSM: string;
+  Directories?: string[]
 }
 
 interface FormData {
@@ -315,7 +317,8 @@ export default function Page() {
           Company: data.Company ?? "",
           ReferenceID: data.ReferenceID ?? "",
           profilePicture: data.profilePicture ?? "",
-          TSM: data.TSM ?? ""
+          TSM: data.TSM ?? "",
+          Directories: data.Directories ?? [],
         });
         setError(null);
       } catch (err) {
@@ -355,6 +358,7 @@ export default function Page() {
             Lastname: user.Lastname,
             profilePicture: user.profilePicture,
             TSM: user.TSM,
+            Directories: user.Directories ?? [],
           };
         });
         setUsersMap(map);
@@ -496,12 +500,26 @@ export default function Page() {
                     className="flex-grow rounded border px-3 py-2 text-sm"
                     aria-label="Search events"
                   />
-                  {(userDetails?.Department === "Sales" || userDetails?.Department === "Sales") ? (
-                    <Button onClick={() => setCreateSalesAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
 
-                  ) : (
-                    <Button onClick={() => setCreateAttendanceOpen(true)} className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"><CalendarCheckIcon />Create Log</Button>
-                  )}
+                  <div className="flex gap-2">
+                    {userDetails?.Directories?.includes("Acculog:Button - Client Visit") && (
+                      <Button
+                        onClick={() => setCreateAttendanceOpen(true)}
+                        className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
+                      >
+                        <CalendarCheckIcon />Create Client Visit
+                      </Button>
+                    )}
+
+                    {userDetails?.Directories?.includes("Acculog:Button - Site Visit") && (
+                      <Button
+                        onClick={() => setCreateSalesAttendanceOpen(true)}
+                        className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
+                      >
+                        <CalendarCheckIcon />Create Site Visit
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {loading && <p>Loading...</p>}

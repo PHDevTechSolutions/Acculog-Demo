@@ -36,12 +36,20 @@ export function AppSidebar({
   setDateCreatedFilterRangeAction,
   ...props
 }: AppSidebarProps) {
-  const [userDetails, setUserDetails] = React.useState({
+  const [userDetails, setUserDetails] = React.useState<{
+    Firstname: string;
+    Lastname: string;
+    Email: string;
+    profilePicture: string;
+    Position: string;
+    Directories: string[]; // <-- add Directories here
+  }>({
     Firstname: "",
     Lastname: "",
     Email: "",
     profilePicture: "",
     Position: "",
+    Directories: [],
   });
 
   const [jobPostingCount, setJobPostingCount] = React.useState(0);
@@ -59,19 +67,11 @@ export function AppSidebar({
           Email: data.Email || "",
           profilePicture: data.profilePicture || "",
           Position: data.Position || "",
+          Directories: Array.isArray(data.Directories) ? data.Directories : [],
         })
       )
       .catch((err) => console.error(err));
   }, [userId]);
-
-  const allowedPositions = [
-    "HR Associate",
-    "HR Manager",
-    "HR Supervisor",
-    "Senior Fullstack Developer",
-    "Fullstack Developer",
-    "IT Manager"
-  ];
 
   React.useEffect(() => {
     if (!userId) return;
@@ -92,9 +92,16 @@ export function AppSidebar({
     };
   }, [userId]);
 
+  // Helper to check directory access
+  function hasAccess(dirKey: string) {
+    return userDetails.Directories.includes(dirKey);
+  }
+
   const calendars = React.useMemo(() => {
-    const baseCalendars = [
-      {
+    const baseCalendars = [];
+
+    if (hasAccess("Acculog:Time Attendance")) {
+      baseCalendars.push({
         name: "Time & Attendance",
         items: [
           {
@@ -118,10 +125,10 @@ export function AppSidebar({
             icon: Clock,
           },
         ],
-      },
-    ];
+      });
+    }
 
-    if (allowedPositions.includes(userDetails.Position)) {
+    if (hasAccess("Acculog:Recruitment")) {
       const totalCount = jobPostingCount + applicationCount;
       baseCalendars.push({
         name: `Recruitment (${totalCount})`,
@@ -141,19 +148,17 @@ export function AppSidebar({
     }
 
     return baseCalendars;
-  }, [userId, userDetails.Position, jobPostingCount, applicationCount]);
+  }, [userId, userDetails.Directories, jobPostingCount, applicationCount]);
 
   function handleDateRangeSelect(range: DateRange | undefined) {
     setDateCreatedFilterRangeAction(range);
   }
 
-  // Fixed: handleRaiseTicketClick now constructs URL the same way as calendars' hrefs
   function handleRaiseTicketClick(userId?: string) {
     if (!userId) {
       console.warn("User ID is missing");
       return;
     }
-
     const url = `/ticket${userId ? `?id=${encodeURIComponent(userId)}` : ""}`;
     window.location.href = url;
   }
@@ -174,15 +179,14 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* DASHBOARD LINK */}
         <SidebarMenu>
-          {/* EXISTING */}
           <DatePicker
             selectedDateRange={dateCreatedFilterRange}
             onDateSelectAction={handleDateRangeSelect}
           />
           <SidebarSeparator className="my-2" />
-          {allowedPositions.includes(userDetails.Position) && (
+
+          {hasAccess("Acculog:Dashboard") && (
             <SidebarMenuItem>
               <Link
                 href={`/dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
@@ -208,7 +212,6 @@ export function AppSidebar({
               <Plus size={18} /> Raise a Concern
             </Button>
           </SidebarMenuItem>
-
         </SidebarMenu>
       </SidebarFooter>
 
