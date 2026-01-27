@@ -108,6 +108,7 @@
     "three": "^0.174.0",
     "three-stdlib": "^2.35.14",
     "twilio": "^5.5.1",
+    "undici": "^7.19.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

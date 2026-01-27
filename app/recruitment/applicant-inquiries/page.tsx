@@ -431,6 +431,7 @@ export default function Page() {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    
                                                     <div className="flex flex-col sm:flex-row gap-4">
                                                         <a
                                                             href={selectedApp.resumeUrl}

@@ -7,10 +7,13 @@ import {
   Marker,
   Circle,
   useMapEvents,
+  useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import { toast } from "sonner";
 import "leaflet/dist/leaflet.css";
+
+/* ================= TYPES ================= */
 
 interface ManualLocationPickerProps {
   latitude: number | null;
@@ -19,7 +22,8 @@ interface ManualLocationPickerProps {
   onChange: (lat: number, lng: number, address?: string) => void;
 }
 
-/* Fix leaflet marker icons */
+/* ================= LEAFLET ICON FIX ================= */
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -30,7 +34,8 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-/* Distance helper */
+/* ================= HELPERS ================= */
+
 function distanceInMeters(
   lat1: number,
   lng1: number,
@@ -40,7 +45,8 @@ function distanceInMeters(
   return L.latLng(lat1, lng1).distanceTo(L.latLng(lat2, lng2));
 }
 
-/* Click handler with radius restriction */
+/* ================= CLICK HANDLER ================= */
+
 function ClickHandler({
   center,
   radius,
@@ -70,19 +76,64 @@ function ClickHandler({
   return null;
 }
 
+/* ================= LOCATE ME BUTTON ================= */
+
+function LocateMeButton({
+  onLocate,
+}: {
+  onLocate: (lat: number, lng: number) => void;
+}) {
+  const map = useMap();
+  const [locating, setLocating] = useState(false);
+
+  const handleLocate = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported.");
+      return;
+    }
+
+    setLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const { latitude, longitude } = coords;
+        map.setView([latitude, longitude], 17, { animate: true });
+        onLocate(latitude, longitude);
+        setLocating(false);
+      },
+      () => {
+        toast.error("Unable to get your location.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  return (
+    <button
+      onClick={handleLocate}
+      className="absolute top-2 right-2 z-[1000] bg-white border rounded-md px-3 py-1 text-xs shadow hover:bg-gray-100"
+    >
+      {locating ? "Locating..." : "📍 Locate Me"}
+    </button>
+  );
+}
+
+/* ================= MAIN COMPONENT ================= */
+
 export default function ManualLocationPicker({
   latitude,
   longitude,
   radiusMeters = 1500,
   onChange,
 }: ManualLocationPickerProps) {
-  // 🔒 FIXED center (GPS origin – never changes)
+  // 🔒 Fixed GPS origin (does NOT change)
   const fixedCenterRef = useRef<[number, number] | null>(null);
 
   // 📍 Marker position (movable)
   const [position, setPosition] = useState<[number, number] | null>(null);
 
-  /* Initialize center ONCE from GPS */
+  /* Initialize fixed center ONCE */
   useEffect(() => {
     if (latitude && longitude && !fixedCenterRef.current) {
       fixedCenterRef.current = [latitude, longitude];
@@ -90,7 +141,8 @@ export default function ManualLocationPicker({
     }
   }, [latitude, longitude]);
 
-  const handlePick = async (lat: number, lng: number) => {
+  /* Reverse geocode + update */
+  const updateLocation = async (lat: number, lng: number) => {
     setPosition([lat, lng]);
 
     try {
@@ -115,7 +167,7 @@ export default function ManualLocationPicker({
   const center = fixedCenterRef.current;
 
   return (
-    <div className="w-full h-[260px] rounded-lg overflow-hidden border">
+    <div className="w-full h-[260px] rounded-lg overflow-hidden border relative">
       <MapContainer
         center={center}
         zoom={16}
@@ -126,7 +178,10 @@ export default function ManualLocationPicker({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* 🔴 FIXED radius */}
+        {/* 📍 Locate Me */}
+        <LocateMeButton onLocate={updateLocation} />
+
+        {/* 🔵 Allowed radius */}
         <Circle
           center={center}
           radius={radiusMeters}
@@ -141,10 +196,10 @@ export default function ManualLocationPicker({
         <ClickHandler
           center={center}
           radius={radiusMeters}
-          onPick={handlePick}
+          onPick={updateLocation}
         />
 
-        {/* 📍 Draggable marker */}
+        {/* 📌 Draggable marker */}
         <Marker
           position={position}
           draggable
@@ -161,9 +216,8 @@ export default function ManualLocationPicker({
               );
 
               if (d <= radiusMeters) {
-                handlePick(p.lat, p.lng);
+                updateLocation(p.lat, p.lng);
               } else {
-                // ⛔ snap back
                 marker.setLatLng(position);
                 toast.error("Pin must stay inside the allowed radius.");
               }
