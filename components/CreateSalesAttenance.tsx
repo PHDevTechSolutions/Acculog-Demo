@@ -5,26 +5,14 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Camera from "./camera";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle, } from "@/components/ui/alert";
+
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle, } from "@/components/ui/field"
 import { MapPin, CheckCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -95,6 +83,9 @@ export default function CreateAttendance({
   >([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState<string | null>(null);
+
+  // New state for client type selection
+  const [clientType, setClientType] = useState<"existing" | "new">("existing");
 
   /* ================= FIX TYPE ================= */
 
@@ -241,6 +232,10 @@ export default function CreateAttendance({
       return toast.error("Please capture Site Visit photo.");
     }
 
+    if (clientType === "existing" && !formData.SiteVisitAccount) {
+      return toast.error("Please select an existing client account.");
+    }
+
     setLoading(true);
 
     try {
@@ -258,6 +253,7 @@ export default function CreateAttendance({
         Location: locationAddress,
         Latitude: manualLat ?? latitude,
         Longitude: manualLng ?? longitude,
+        SiteVisitAccount: clientType === "new" ? "" : formData.SiteVisitAccount,
       };
 
       const response = await fetch("/api/ModuleSales/Activity/AddLog", {
@@ -288,6 +284,7 @@ export default function CreateAttendance({
 
       setCapturedImage(null);
       setSiteCapturedImage(null);
+      setClientType("existing"); // reset to default
     } catch (err) {
       console.error(err);
       toast.error("Error saving attendance.");
@@ -347,35 +344,69 @@ export default function CreateAttendance({
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Site Visit Account</Label>
-                {loadingAccounts ? (
-                  <p className="text-xs text-gray-500">Loading accounts...</p>
-                ) : accountsError ? (
-                  <p className="text-xs text-red-500">{accountsError}</p>
-                ) : (
-                  <Select
-                    value={formData.SiteVisitAccount || ""}
-                    onValueChange={(v) =>
-                      onChangeAction("SiteVisitAccount", v)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {siteVisitAccounts.map((acc) => (
-                        <SelectItem
-                          key={acc.company_name}
-                          value={acc.company_name}
-                        >
-                          {acc.company_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              {/* New Client Type Checkbox */}
+              <div className="grid gap-1 text-xs">
+                <Label>Client Type</Label>
+                <RadioGroup
+                  value={clientType}
+                  onValueChange={(v: "existing" | "new") => setClientType(v)}
+                >
+                  <FieldLabel htmlFor="existing-client">
+                    <Field orientation="horizontal" className="cursor-pointer">
+                      <FieldContent>
+                        <FieldTitle>Existing Client</FieldTitle>
+                        <FieldDescription>
+                          Select this if client already exists.
+                        </FieldDescription>
+                      </FieldContent>
+                      <RadioGroupItem value="existing" id="existing-client" />
+                    </Field>
+                  </FieldLabel>
+                  <FieldLabel htmlFor="new-client">
+                    <Field orientation="horizontal" className="cursor-pointer">
+                      <FieldContent>
+                        <FieldTitle>New Client</FieldTitle>
+                        <FieldDescription>
+                          Select this if this is a new client.
+                        </FieldDescription>
+                      </FieldContent>
+                      <RadioGroupItem value="new" id="new-client" />
+                    </Field>
+                  </FieldLabel>
+                </RadioGroup>
               </div>
+
+              {clientType === "existing" && (
+                <div className="grid gap-2">
+                  <Label>Site Visit Account</Label>
+                  {loadingAccounts ? (
+                    <p className="text-xs text-gray-500">Loading accounts...</p>
+                  ) : accountsError ? (
+                    <p className="text-xs text-red-500">{accountsError}</p>
+                  ) : (
+                    <Select
+                      value={formData.SiteVisitAccount || ""}
+                      onValueChange={(v) =>
+                        onChangeAction("SiteVisitAccount", v)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {siteVisitAccounts.map((acc) => (
+                          <SelectItem
+                            key={acc.company_name}
+                            value={acc.company_name}
+                          >
+                            {acc.company_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <Label>Site Visit Photo</Label>
