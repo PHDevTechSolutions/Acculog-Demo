@@ -103,7 +103,7 @@ export default function CreateAttendance({
 
   // New state for client type selection (only relevant for Site Visit)
   const [clientType, setClientType] = useState<"existing" | "new">("existing");
-
+  const [hasHRLoginToday, setHasHRLoginToday] = useState(false);
   /* ================= FIX TYPE ================= */
 
   useEffect(() => {
@@ -225,6 +225,10 @@ export default function CreateAttendance({
           })
         );
       }
+
+      // Determine if user already has HR Attendance login today
+      // Assuming loginCount counts logins today of type HR Attendance
+      setHasHRLoginToday(data.loginCount > 0);
     };
 
     fetchSummary();
@@ -344,15 +348,21 @@ export default function CreateAttendance({
               onValueChange={(value) => setAttendanceType(value as "hr" | "site")}
               className="max-w-md" // optional width limit like example
             >
-              <FieldLabel htmlFor="attendance-hr">
-                <Field orientation="horizontal" className="cursor-pointer">
-                  <FieldContent>
-                    <FieldTitle>HR Attendance</FieldTitle>
-                    <FieldDescription>For office and regular HR attendance.</FieldDescription>
-                  </FieldContent>
-                  <RadioGroupItem value="hr" id="attendance-hr" />
-                </Field>
-              </FieldLabel>
+              {!hasHRLoginToday ? (
+                <FieldLabel htmlFor="attendance-hr">
+                  <Field orientation="horizontal" className="cursor-pointer">
+                    <FieldContent>
+                      <FieldTitle>HR Attendance</FieldTitle>
+                      <FieldDescription>For office and regular HR attendance.</FieldDescription>
+                    </FieldContent>
+                    <RadioGroupItem value="hr" id="attendance-hr" />
+                  </Field>
+                </FieldLabel>
+              ) : (
+                <Alert className="text-xs p-2">
+                  HR Attendance already logged today.
+                </Alert>
+              )}
 
               <FieldLabel htmlFor="attendance-site">
                 <Field orientation="horizontal" className="cursor-pointer">
