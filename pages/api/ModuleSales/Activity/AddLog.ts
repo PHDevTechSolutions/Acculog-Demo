@@ -59,10 +59,13 @@ export default async function addActivityLog(
       { sort: { date_created: -1 } }
     );
 
-    /* 🔒 PREVENT SAME STATUS TWICE */
-    if (lastActivityToday?.Status === Status) {
+    /* 🔒 PREVENT SAME STATUS AND SAME TYPE TWICE */
+    if (
+      lastActivityToday?.Status === Status &&
+      lastActivityToday?.Type === Type
+    ) {
       return res.status(409).json({
-        error: `You are already ${Status.toLowerCase()}.`,
+        error: `You are already ${Status.toLowerCase()} for ${Type}.`,
       });
     }
 

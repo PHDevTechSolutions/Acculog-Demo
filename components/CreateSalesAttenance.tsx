@@ -1,20 +1,34 @@
-"use client";
-
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Camera from "./camera";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle, } from "@/components/ui/alert";
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle, } from "@/components/ui/field"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldTitle,
+} from "@/components/ui/field";
 import { MapPin, CheckCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Select from "react-select";
 
 const ManualLocationPicker = dynamic(
   () => import("./manual-location-picker"),
@@ -84,17 +98,22 @@ export default function CreateAttendance({
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState<string | null>(null);
 
-  // New state for client type selection
+  // New state for attendance type selection
+  const [attendanceType, setAttendanceType] = useState<"hr" | "site" | "">("");
+
+  // New state for client type selection (only relevant for Site Visit)
   const [clientType, setClientType] = useState<"existing" | "new">("existing");
 
   /* ================= FIX TYPE ================= */
 
   useEffect(() => {
     if (!open) return;
-    if (formData.Type !== "Site Visit") {
+    if (attendanceType === "hr") {
+      onChangeAction("Type", "HR Attendance");
+    } else {
       onChangeAction("Type", "Site Visit");
     }
-  }, [open]);
+  }, [attendanceType, open]);
 
   /* ================= FETCH SITE VISIT ACCOUNTS ================= */
 
@@ -216,7 +235,7 @@ export default function CreateAttendance({
   /* ================= SUBMIT ================= */
 
   const handleCreate = async () => {
-    if (!formData.Status) {
+    if (attendanceType === "hr" && !formData.Status) {
       return toast.error("Please select Login or Logout.");
     }
 
@@ -228,11 +247,19 @@ export default function CreateAttendance({
       return toast.error("Location not ready yet.");
     }
 
-    if (formData.Status !== "Logout" && !siteCapturedImage) {
+    if (
+      attendanceType === "site" &&
+      formData.Status !== "Logout" &&
+      !siteCapturedImage
+    ) {
       return toast.error("Please capture Site Visit photo.");
     }
 
-    if (clientType === "existing" && !formData.SiteVisitAccount) {
+    if (
+      attendanceType === "site" &&
+      clientType === "existing" &&
+      !formData.SiteVisitAccount
+    ) {
       return toast.error("Please select an existing client account.");
     }
 
@@ -247,7 +274,7 @@ export default function CreateAttendance({
 
       const payload = {
         ...formData,
-        Type: "Site Visit",
+        Type: attendanceType === "hr" ? "HR Attendance" : "Site Visit",
         PhotoURL: photoURL,
         SitePhotoURL: sitePhotoURL,
         Location: locationAddress,
@@ -275,7 +302,7 @@ export default function CreateAttendance({
         ReferenceID: userDetails.ReferenceID,
         Email: userDetails.Email,
         TSM: userDetails.TSM,
-        Type: "Site Visit",
+        Type: attendanceType === "hr" ? "HR Attendance" : "Site Visit",
         Status: "",
         PhotoURL: "",
         Remarks: "",
@@ -285,6 +312,7 @@ export default function CreateAttendance({
       setCapturedImage(null);
       setSiteCapturedImage(null);
       setClientType("existing"); // reset to default
+      setAttendanceType("hr"); // reset to default
     } catch (err) {
       console.error(err);
       toast.error("Error saving attendance.");
@@ -292,6 +320,11 @@ export default function CreateAttendance({
       setLoading(false);
     }
   };
+
+  const statusOptions = [
+    { value: "Login", label: "Login" },
+    { value: "Logout", label: "Logout" },
+  ];
 
   /* ================= UI ================= */
 
@@ -303,150 +336,215 @@ export default function CreateAttendance({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-4">
-          {lastStatus && (
-            <div className="border rounded-lg bg-gray-50 p-3 text-xs">
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className={
-                    lastStatus === "Login"
-                      ? "text-green-600 font-semibold"
-                      : "text-red-600 font-semibold"
-                  }
-                >
-                  {lastStatus}
-                </span>
-              </p>
-              {lastTime && <p>Last activity: {lastTime}</p>}
-              <p className="text-blue-600 font-semibold">
-                Total logins today: {loginCountToday}
-              </p>
-            </div>
-          )}
+          <div className="grid gap-2">
+            <Label>Attendance Type</Label>
 
-          <Camera onCaptureAction={setCapturedImage} />
+            <RadioGroup
+              value={attendanceType}
+              onValueChange={(value) => setAttendanceType(value as "hr" | "site")}
+              className="max-w-md" // optional width limit like example
+            >
+              <FieldLabel htmlFor="attendance-hr">
+                <Field orientation="horizontal" className="cursor-pointer">
+                  <FieldContent>
+                    <FieldTitle>HR Attendance</FieldTitle>
+                    <FieldDescription>For office and regular HR attendance.</FieldDescription>
+                  </FieldContent>
+                  <RadioGroupItem value="hr" id="attendance-hr" />
+                </Field>
+              </FieldLabel>
 
-          {capturedImage && (
+              <FieldLabel htmlFor="attendance-site">
+                <Field orientation="horizontal" className="cursor-pointer">
+                  <FieldContent>
+                    <FieldTitle>Site Visit</FieldTitle>
+                    <FieldDescription>For visits to client sites and field work.</FieldDescription>
+                  </FieldContent>
+                  <RadioGroupItem value="site" id="attendance-site" />
+                </Field>
+              </FieldLabel>
+            </RadioGroup>
+          </div>
+
+          {/* Camera always shows */}
+          {attendanceType && (
             <>
-              <div className="grid gap-2">
-                <Label>Status</Label>
-                <Select
-                  value={formData.Status}
-                  onValueChange={(v) => onChangeAction("Status", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Login">Login</SelectItem>
-                    <SelectItem value="Logout">Logout</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Camera onCaptureAction={setCapturedImage} />
 
-              {/* New Client Type Checkbox */}
-              <div className="grid gap-1 text-xs">
-                <Label>Client Type</Label>
-                <RadioGroup
-                  value={clientType}
-                  onValueChange={(v: "existing" | "new") => setClientType(v)}
-                >
-                  <FieldLabel htmlFor="existing-client">
-                    <Field orientation="horizontal" className="cursor-pointer">
-                      <FieldContent>
-                        <FieldTitle>Existing Client</FieldTitle>
-                        <FieldDescription>
-                          Select this if client already exists.
-                        </FieldDescription>
-                      </FieldContent>
-                      <RadioGroupItem value="existing" id="existing-client" />
-                    </Field>
-                  </FieldLabel>
-                  <FieldLabel htmlFor="new-client">
-                    <Field orientation="horizontal" className="cursor-pointer">
-                      <FieldContent>
-                        <FieldTitle>New Client</FieldTitle>
-                        <FieldDescription>
-                          Select this if this is a new client.
-                        </FieldDescription>
-                      </FieldContent>
-                      <RadioGroupItem value="new" id="new-client" />
-                    </Field>
-                  </FieldLabel>
-                </RadioGroup>
-              </div>
+              {capturedImage && (
+                <>
+                  {attendanceType === "hr" && (
+                    <>
+                      {/* HR Attendance Fields */}
+                      <div className="grid gap-2">
+                        <Label>Status</Label>
+                        <Select
+                          options={statusOptions}
+                          value={
+                            statusOptions.find(
+                              (option) => option.value === formData.Status
+                            ) || null
+                          }
+                          onChange={(selected) =>
+                            onChangeAction("Status", selected?.value || "")
+                          }
+                          placeholder="Select Status"
+                          isClearable
+                        />
+                      </div>
 
-              {clientType === "existing" && (
-                <div className="grid gap-2">
-                  <Label>Site Visit Account</Label>
-                  {loadingAccounts ? (
-                    <p className="text-xs text-gray-500">Loading accounts...</p>
-                  ) : accountsError ? (
-                    <p className="text-xs text-red-500">{accountsError}</p>
-                  ) : (
-                    <Select
-                      value={formData.SiteVisitAccount || ""}
-                      onValueChange={(v) =>
-                        onChangeAction("SiteVisitAccount", v)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {siteVisitAccounts.map((acc) => (
-                          <SelectItem
-                            key={acc.company_name}
-                            value={acc.company_name}
-                          >
-                            {acc.company_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <div className="grid gap-2">
+                        <Label>Remarks</Label>
+                        <Textarea
+                          value={formData.Remarks}
+                          onChange={(e) => onChangeAction("Remarks", e.target.value)}
+                        />
+                      </div>
+
+                      <Alert className="text-xs">
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        <AlertTitle>My Location</AlertTitle>
+                        <AlertDescription>{locationAddress}</AlertDescription>
+                      </Alert>
+
+                      <ManualLocationPicker
+                        latitude={manualLat ?? latitude}
+                        longitude={manualLng ?? longitude}
+                        onChange={(lat, lng, address) => {
+                          setManualLat(lat);
+                          setManualLng(lng);
+                          if (address) setLocationAddress(address);
+                        }}
+                      />
+                    </>
                   )}
-                </div>
+
+                  {attendanceType === "site" && (
+                    <>
+                      {/* Site Visit Fields */}
+                      <div className="grid gap-2">
+                        <Label>Status</Label>
+                        <Select
+                          options={statusOptions}
+                          value={
+                            statusOptions.find(
+                              (option) => option.value === formData.Status
+                            ) || null
+                          }
+                          onChange={(selected) =>
+                            onChangeAction("Status", selected?.value || "")
+                          }
+                          placeholder="Select Status"
+                          isClearable
+                        />
+                      </div>
+                      {/* Client Type */}
+                      <div className="grid gap-1 text-xs">
+                        <Label>Client Type</Label>
+                        <RadioGroup
+                          value={clientType}
+                          onValueChange={(v: "existing" | "new") => setClientType(v)}
+                        >
+                          <FieldLabel htmlFor="existing-client">
+                            <Field orientation="horizontal" className="cursor-pointer">
+                              <FieldContent>
+                                <FieldTitle>Existing Client</FieldTitle>
+                                <FieldDescription>
+                                  Select this if client already exists.
+                                </FieldDescription>
+                              </FieldContent>
+                              <RadioGroupItem value="existing" id="existing-client" />
+                            </Field>
+                          </FieldLabel>
+
+                          <FieldLabel htmlFor="new-client">
+                            <Field orientation="horizontal" className="cursor-pointer">
+                              <FieldContent>
+                                <FieldTitle>New Client</FieldTitle>
+                                <FieldDescription>
+                                  Select this if this is a new client.
+                                </FieldDescription>
+                              </FieldContent>
+                              <RadioGroupItem value="new" id="new-client" />
+                            </Field>
+                          </FieldLabel>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Site Visit Account only if existing client */}
+                      {clientType === "existing" && (
+                        <div className="grid gap-2">
+                          <Label>Site Visit Account</Label>
+                          {loadingAccounts ? (
+                            <p className="text-xs text-gray-500">Loading accounts...</p>
+                          ) : accountsError ? (
+                            <p className="text-xs text-red-500">{accountsError}</p>
+                          ) : (
+                            <Select
+                              options={siteVisitAccounts.map((acc) => ({
+                                value: acc.company_name,
+                                label: acc.company_name,
+                              }))}
+                              value={
+                                formData.SiteVisitAccount
+                                  ? {
+                                    value: formData.SiteVisitAccount,
+                                    label: formData.SiteVisitAccount,
+                                  }
+                                  : null
+                              }
+                              onChange={(selected) =>
+                                onChangeAction("SiteVisitAccount", selected?.value || "")
+                              }
+                              isClearable
+                              placeholder="Select Account"
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Site Visit Photo */}
+                      <div className="grid gap-2">
+                        <Label>Site Visit Photo</Label>
+                        <Camera onCaptureAction={setSiteCapturedImage} />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Remarks</Label>
+                        <Textarea
+                          value={formData.Remarks}
+                          onChange={(e) => onChangeAction("Remarks", e.target.value)}
+                        />
+                      </div>
+
+                      <Alert className="text-xs">
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        <AlertTitle>My Location</AlertTitle>
+                        <AlertDescription>{locationAddress}</AlertDescription>
+                      </Alert>
+
+                      <ManualLocationPicker
+                        latitude={manualLat ?? latitude}
+                        longitude={manualLng ?? longitude}
+                        onChange={(lat, lng, address) => {
+                          setManualLat(lat);
+                          setManualLng(lng);
+                          if (address) setLocationAddress(address);
+                        }}
+                      />
+                    </>
+                  )}
+
+                  <Button
+                    className="bg-green-600 text-lg p-6"
+                    onClick={handleCreate}
+                    disabled={loading}
+                  >
+                    <CheckCircleIcon />
+                    {loading ? "Saving..." : "Create Attendance"}
+                  </Button>
+                </>
               )}
-
-              <div className="grid gap-2">
-                <Label>Site Visit Photo</Label>
-                <Camera onCaptureAction={setSiteCapturedImage} />
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Remarks</Label>
-                <Textarea
-                  value={formData.Remarks}
-                  onChange={(e) =>
-                    onChangeAction("Remarks", e.target.value)
-                  }
-                />
-              </div>
-
-              <Alert className="text-xs">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <AlertTitle>My Location</AlertTitle>
-                <AlertDescription>{locationAddress}</AlertDescription>
-              </Alert>
-
-              <ManualLocationPicker
-                latitude={manualLat ?? latitude}
-                longitude={manualLng ?? longitude}
-                onChange={(lat, lng, address) => {
-                  setManualLat(lat);
-                  setManualLng(lng);
-                  if (address) setLocationAddress(address);
-                }}
-              />
-
-              <Button
-                className="bg-green-600 text-lg p-6"
-                onClick={handleCreate}
-                disabled={loading}
-              >
-                <CheckCircleIcon />
-                {loading ? "Saving..." : "Create Attendance"}
-              </Button>
             </>
           )}
         </div>
