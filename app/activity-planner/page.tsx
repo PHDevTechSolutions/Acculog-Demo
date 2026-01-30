@@ -7,12 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { FormatProvider } from "@/contexts/FormatContext";
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -22,7 +17,7 @@ import { type DateRange } from "react-day-picker";
 import CreateSalesAttendance from "@/components/CreateSalesAttenance";
 import { MapPin, X } from "lucide-react";
 import { motion, useInView } from "framer-motion";
-import { CalendarCheckIcon, MapPinCheck } from "lucide-react";
+import { CalendarCheckIcon, MapPinCheck, ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 import ProtectedPageWrapper from "@/components/protected-page-wrapper";
 // ---------------- Interfaces ----------------
@@ -453,7 +448,6 @@ export default function Page() {
     date: new Date(post.date_created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
   }));
 
-
   // ---------------- Render ----------------
   return (
     <ProtectedPageWrapper>
@@ -480,12 +474,12 @@ export default function Page() {
                   </BreadcrumbList>
                 </Breadcrumb>
                 <div className="ml-auto flex gap-2">
-                  <button onClick={goToPrevMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                    Prev
-                  </button>
-                  <button onClick={goToNextMonth} className="rounded text-xs border px-3 py-1 hover:bg-gray-100">
-                    Next
-                  </button>
+                  <Button onClick={goToPrevMonth} >
+                   <ArrowLeftIcon /> Prev
+                  </Button>
+                  <Button onClick={goToNextMonth}>
+                   Next <ArrowRightIcon />
+                  </Button>
                 </div>
               </header>
 
