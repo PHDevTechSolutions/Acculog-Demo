@@ -501,7 +501,7 @@ export default function Page() {
                         onClick={() => setCreateAttendanceOpen(true)}
                         className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
                       >
-                        <CalendarCheckIcon />Create Client Visit
+                        <CalendarCheckIcon />Create
                       </Button>
                     )}
 
@@ -510,7 +510,7 @@ export default function Page() {
                         onClick={() => setCreateSalesAttendanceOpen(true)}
                         className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#d11a2a] transition-all shadow-lg shadow-gray-200"
                       >
-                        <CalendarCheckIcon />Create Site Visit
+                        <CalendarCheckIcon />Create
                       </Button>
                     )}
                   </div>
