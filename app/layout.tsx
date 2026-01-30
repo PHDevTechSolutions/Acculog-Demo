@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Acculog - Attendance & Time Tracking System",
   description: "Created in NextJs Developed By Fluxx Tech Solutions",
   icons: {
-    icon: "/Fluxx.png",
-    shortcut: "/Fluxx.png",
-    apple: "/Fluxx.png",
+    icon: "/images/logo/acculog.png",
+    shortcut: "/images/logo/acculog.png",
+    apple: "/images/logo/acculog.png",
   },
   manifest: "/manifest.json",
 };
