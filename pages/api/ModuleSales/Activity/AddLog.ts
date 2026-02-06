@@ -69,7 +69,7 @@ export default async function addActivityLog(
       });
     }
 
-    /* 🚫 LOGIN LIMIT: MAX 10 LOGINS PER DAY */
+    /* 🚫 LOGIN LIMIT: MAX 20 LOGINS PER DAY */
     if (Status === "Login") {
       const loginCount = await activityLogsCollection.countDocuments({
         ReferenceID,
@@ -80,14 +80,14 @@ export default async function addActivityLog(
         },
       });
 
-      if (loginCount >= 10) {
+      if (loginCount >= 20) {
         return res.status(403).json({
-          error: "Daily 10 Login limit reached. Resets at 8:00 AM.",
+          error: "Daily 20 Login limit reached. Resets at 8:00 AM.",
         });
       }
     }
 
-    /* 🚫 SITE VISIT LIMIT */
+    /* 🚫 SITE VISIT LIMIT: MAX 20 SITE VISITS PER DAY */
     if (Type === "Site Visit") {
       const siteVisitCount = await activityLogsCollection.countDocuments({
         ReferenceID,
@@ -98,9 +98,9 @@ export default async function addActivityLog(
         },
       });
 
-      if (siteVisitCount >= 10) {
+      if (siteVisitCount >= 20) {
         return res.status(403).json({
-          error: "Daily 10 Site Visit limit reached. Resets at 8:00 AM.",
+          error: "Daily 20 Site Visit limit reached. Resets at 8:00 AM.",
         });
       }
     }
