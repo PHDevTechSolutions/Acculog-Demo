@@ -299,6 +299,10 @@ export default function CreateAttendance({
       }
 
       toast.success("Attendance created!");
+      if (attendanceType === "site" && formData.Status === "Logout") {
+        setHasHRLoginToday(false); // Allow HR Attendance to be selected again after Site Visit Logout
+      }
+
       fetchAccountAction();
       onOpenChangeAction(false);
 
@@ -348,21 +352,16 @@ export default function CreateAttendance({
               onValueChange={(value) => setAttendanceType(value as "hr" | "site")}
               className="max-w-md" // optional width limit like example
             >
-              {!hasHRLoginToday ? (
-                <FieldLabel htmlFor="attendance-hr">
-                  <Field orientation="horizontal" className="cursor-pointer">
-                    <FieldContent>
-                      <FieldTitle>HR Attendance</FieldTitle>
-                      <FieldDescription>For office and regular HR attendance.</FieldDescription>
-                    </FieldContent>
-                    <RadioGroupItem value="hr" id="attendance-hr" />
-                  </Field>
-                </FieldLabel>
-              ) : (
-                <Alert className="text-xs p-2">
-                  HR Attendance already logged today.
-                </Alert>
-              )}
+
+              <FieldLabel htmlFor="attendance-hr">
+                <Field orientation="horizontal" className="cursor-pointer">
+                  <FieldContent>
+                    <FieldTitle>HR Attendance</FieldTitle>
+                    <FieldDescription>For office and regular HR attendance.</FieldDescription>
+                  </FieldContent>
+                  <RadioGroupItem value="hr" id="attendance-hr" />
+                </Field>
+              </FieldLabel>
 
               <FieldLabel htmlFor="attendance-site">
                 <Field orientation="horizontal" className="cursor-pointer">
